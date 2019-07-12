@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>osmdroid 中使用ArcgisServer地图服务 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>osmdroid 中使用ArcgisServer地图服务</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2019年07月12日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#osmdroid" class='tag'>osmdroid</a>
+
+  <a href="/tags/#Android" class='tag'>Android</a>
+
+  <a href="/tags/#ArcgisServer" class='tag'>ArcgisServer</a>
+
+
+            
+          </div>
+          <h3 id="osmdroid"><a href="#osmdroid" class="headerlink" title="osmdroid"></a>osmdroid</h3><p><a href="https://github.com/osmdroid/osmdroid" target="_blank" rel="noopener">osmdroid</a>是一个开源项目，其目的是提供比安卓原生的MapView更为强大的地图组件库。osmdroid支持多种在线或者离线的瓦片地图源以及地图覆盖管理器，用于绘制图标、几何图形以及GPS定位。</p>
+<p>osmdroid相比于Android原生MapView的优势在于其丰富的瓦片地图源和地图覆盖管理器了。相比于Arcgis Android Runtime SDK这种专业的GIS开发包在功能上的劣势非常明显，但也有其优势也很明显——轻量。一个使用了Arcgis Android Runtime SDK的APP，如果完整支持arm64-v8a、armeabi-v7a、armeabi、x86的话，apk文件至少60M，仅支持armeabi-v7a也在30M以上，而使用osmdroid的APP的APK通常只有几M。</p>
+<h3 id="ArcgisServer的地图服务"><a href="#ArcgisServer的地图服务" class="headerlink" title="ArcgisServer的地图服务"></a>ArcgisServer的地图服务</h3><p>Arcgis可以说是GIS领域最强大的软件，没有之一。Esri公司也是一家值得尊重的公司，一直在致力于GIS领域新技术的开发以及Arcgis和互联网新科技的融合。ArcgisServer提供了目前市场上最强大最丰富的的GIS领域的服务，包括地图服务，瓦片服务，矢量切片服务，要素服务，分析服务，几何网络服务等等等。</p>
+<p>osmdroid主要是一个MapView，矢量切片这种新技术完全不支持，瓦片服务本来就支持，只有地图服务，osmdroid原本不支持，但有潜力。这里说的潜力，是因为Arcgis的地图服务是通过export接口返回的一张图片，在数据源上与瓦片地图没有区别。</p>
+<h3 id="以瓦片的形式请求地图服务"><a href="#以瓦片的形式请求地图服务" class="headerlink" title="以瓦片的形式请求地图服务"></a>以瓦片的形式请求地图服务</h3><p>在ArcgisServer地图服务的地图请求链接一般形式如下：<a href="http://192.168.1.28:6080/arcgis/rest/services/NHCT/MapServer/export?bbox=114.36767578125,30.519681272749406,114.3731689453125,30.524413269923976&amp;bboxSR=4326&amp;size=256,256&amp;format=png24&amp;transparent=true&amp;dpi=96&amp;f=image，其中bbox表示请求的地图的范围，size表示请求的图片的大小，format表示请求的图片的格式，transparent表示没有数据的部分是否透明，如果format不为png时，transparent参数无效。f表示以图片的形式返回，另外还有json和html的形式。" target="_blank" rel="noopener">http://192.168.1.28:6080/arcgis/rest/services/NHCT/MapServer/export?bbox=114.36767578125,30.519681272749406,114.3731689453125,30.524413269923976&amp;bboxSR=4326&amp;size=256,256&amp;format=png24&amp;transparent=true&amp;dpi=96&amp;f=image，其中bbox表示请求的地图的范围，size表示请求的图片的大小，format表示请求的图片的格式，transparent表示没有数据的部分是否透明，如果format不为png时，transparent参数无效。f表示以图片的形式返回，另外还有json和html的形式。</a></p>
+<p>我们要以瓦片的形式请求地图服务，重点就在算出每个请求瓦片的bbox，其逻辑代码如下。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> BoundingBox <span class="title">tile2boundingBox</span><span class="params">(<span class="keyword">final</span> <span class="keyword">int</span> x, <span class="keyword">final</span> <span class="keyword">int</span> y, <span class="keyword">final</span> <span class="keyword">int</span> zoom)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    BoundingBox bb = <span class="keyword">new</span> BoundingBox(tile2lat(y, zoom), tile2lon(x + <span class="number">1</span>, zoom), tile2lat(y + <span class="number">1</span>, zoom), tile2lon(x, zoom));</span><br><span class="line">    <span class="keyword">return</span> bb;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">double</span> <span class="title">tile2lon</span><span class="params">(<span class="keyword">int</span> x, <span class="keyword">int</span> z)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x / Math.pow(<span class="number">2.0</span>, z) * <span class="number">360.0</span> - <span class="number">180</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">double</span> <span class="title">tile2lat</span><span class="params">(<span class="keyword">int</span> y, <span class="keyword">int</span> z)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">double</span> n = Math.PI - (<span class="number">2.0</span> * Math.PI * y) / Math.pow(<span class="number">2.0</span>, z);</span><br><span class="line">    <span class="keyword">return</span> Math.toDegrees(Math.atan(Math.sinh(n)));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当然如果是莫卡托投影的，就不是经纬度了</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span>  <span class="keyword">double</span>[] getBoundingBox(<span class="keyword">int</span> x, <span class="keyword">int</span> y, <span class="keyword">int</span> zoom) &#123;</span><br><span class="line">    <span class="keyword">double</span> tileSize = MAP_SIZE / Math.pow(<span class="number">2</span>, zoom);</span><br><span class="line">    <span class="keyword">double</span> minx = TILE_ORIGIN[ORIG_X] + x * tileSize;</span><br><span class="line">    <span class="keyword">double</span> maxx = TILE_ORIGIN[ORIG_X] + (x + <span class="number">1</span>) * tileSize;</span><br><span class="line">    <span class="keyword">double</span> miny = TILE_ORIGIN[ORIG_Y] - (y + <span class="number">1</span>) * tileSize;</span><br><span class="line">    <span class="keyword">double</span> maxy = TILE_ORIGIN[ORIG_Y] - y * tileSize;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">double</span>[] bbox = <span class="keyword">new</span> <span class="keyword">double</span>[<span class="number">4</span>];</span><br><span class="line">    bbox[MINX] = minx;</span><br><span class="line">    bbox[MINY] = miny;</span><br><span class="line">    bbox[MAXX] = maxx;</span><br><span class="line">    bbox[MAXY] = maxy;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bbox;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后照着请求瓦片一样请求就可以了</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">getTileURLString</span><span class="params">(<span class="keyword">long</span> pMapTileIndex)</span> </span>&#123;</span><br><span class="line">    String baseUrl = getBaseUrl();</span><br><span class="line">    <span class="keyword">if</span> (forceHttps)</span><br><span class="line">        baseUrl = baseUrl.replace(<span class="string">"http://"</span>, <span class="string">"https://"</span>);</span><br><span class="line">    <span class="keyword">if</span> (forceHttp)</span><br><span class="line">        baseUrl = baseUrl.replace(<span class="string">"https://"</span>, <span class="string">"http://"</span>);</span><br><span class="line">    StringBuilder sb = <span class="keyword">new</span> StringBuilder(baseUrl);</span><br><span class="line">    <span class="keyword">if</span> (!baseUrl.endsWith(<span class="string">"/"</span>))</span><br><span class="line">        sb.append(<span class="string">"/"</span>);</span><br><span class="line">    sb.append(<span class="string">"export?"</span>).append(<span class="string">"bbox="</span>);</span><br><span class="line">    <span class="keyword">if</span> (srs.equals(<span class="string">"EPSG:900913"</span>)) &#123;</span><br><span class="line">        <span class="keyword">double</span>[] bbox = getBoundingBox(MapTileIndex.getX(pMapTileIndex), MapTileIndex.getY(pMapTileIndex), MapTileIndex.getZoom(pMapTileIndex));</span><br><span class="line">        sb.append(bbox[MINX]).append(<span class="string">","</span>);</span><br><span class="line">        sb.append(bbox[MINY]).append(<span class="string">","</span>);</span><br><span class="line">        sb.append(bbox[MAXX]).append(<span class="string">","</span>);</span><br><span class="line">        sb.append(bbox[MAXY]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        BoundingBox boundingBox = tile2boundingBox(MapTileIndex.getX(pMapTileIndex), MapTileIndex.getY(pMapTileIndex), MapTileIndex.getZoom(pMapTileIndex));</span><br><span class="line">        sb.append(boundingBox.getLonWest()).append(<span class="string">","</span>);</span><br><span class="line">        sb.append(boundingBox.getLatSouth()).append(<span class="string">","</span>);</span><br><span class="line">        sb.append(boundingBox.getLonEast()).append(<span class="string">","</span>);</span><br><span class="line">        sb.append(boundingBox.getLatNorth());</span><br><span class="line">    &#125;</span><br><span class="line">    sb.append(<span class="string">"&amp;bboxSR="</span>).append(srs.replace(<span class="string">"EPSG:"</span>,<span class="string">""</span>)).append(<span class="string">"&amp;size="</span>).append(getTileSizePixels()).append(<span class="string">","</span>).append(getTileSizePixels());</span><br><span class="line">    sb.append(<span class="string">"&amp;format=png24"</span>).append(<span class="string">"&amp;transparent=true"</span>).append(<span class="string">"&amp;dpi=96"</span>).append(<span class="string">"&amp;f=image"</span>);</span><br><span class="line">    String str = sb.toString();</span><br><span class="line">    <span class="keyword">return</span> str;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个思路不是我的，而是在osmdroid中自带一个osmdroid-wms的子项目，我心想WMS和ArcgisServer的地图服务原理一致，前者可以后者当然也可以，所以就仔细阅读了一下osmdroid-wms的源码，参照<a href="https://github.com/osmdroid/osmdroid/blob/master/osmdroid-wms/src/main/java/org/osmdroid/wms/WMSTileSource.java" target="_blank" rel="noopener">WMSTileSource</a>类写了一个ArcgisServer地图服务的DataSource，核心代码就是上面那些了。</p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#osmdroid"><span class="toc-number">1.</span> <span class="toc-text">osmdroid</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ArcgisServer的地图服务"><span class="toc-number">2.</span> <span class="toc-text">ArcgisServer的地图服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#以瓦片的形式请求地图服务"><span class="toc-number">3.</span> <span class="toc-text">以瓦片的形式请求地图服务</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2019/osmdroid中使用ArcgisServer地图服务/";
+  var disqus_url = "http://zxhm.me/2019/osmdroid中使用ArcgisServer地图服务/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2019 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
