@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>GeoServer WFS 多图层几何查询 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>GeoServer WFS 多图层几何查询</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2019年08月19日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#GeoServer" class='tag'>GeoServer</a>
+
+  <a href="/tags/#WFS" class='tag'>WFS</a>
+
+
+            
+          </div>
+          <p>GeoServer和WFS就不需要介绍了，直接进入正题。场景大概是这样的：用一次GetFeature请求，使用同样的几何条件，查询出指定多个图层符合要求的要素。GeoServer支持的几何图形和几何关系操作如下：</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">fes:GeometryOperands</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:Point"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:MultiPoint"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:LineString"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:MultiLineString"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:Curve"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:MultiCurve"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:Polygon"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:MultiPolygon"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:Surface"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:MultiSurface"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:MultiGeometry"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:Box"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:GeometryOperand</span> <span class="attr">name</span>=<span class="string">"gml:Envelope"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">fes:GeometryOperands</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">fes:SpatialOperators</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"BBOX"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Equals"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Disjoint"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Intersects"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Touches"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Crosses"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Within"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Contains"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Overlaps"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"Beyond"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:SpatialOperator</span> <span class="attr">name</span>=<span class="string">"DWithin"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">fes:SpatialOperators</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>以使用Envelope进行Intersects操作查询为例，构造的查询条件如下</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">fes:Filter</span> <span class="attr">xmlns:fes</span>=<span class="string">"http://www.opengis.net/fes/2.0"</span> <span class="attr">xmlns:gml</span>=<span class="string">"http://www.opengis.net/gml/3.2"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">fes:Intersects</span>&gt;</span></span><br><span class="line">	    <span class="tag">&lt;<span class="name">fes:ValueReference</span>&gt;</span>map:geom<span class="tag">&lt;/<span class="name">fes:ValueReference</span>&gt;</span></span><br><span class="line">		<span class="tag">&lt;<span class="name">gml:Envelope</span> <span class="attr">srsName</span>=<span class="string">"EPSG:4490"</span>&gt;</span></span><br><span class="line">			<span class="tag">&lt;<span class="name">gml:lowerCorner</span>&gt;</span>103.6458293767603 36.03833528028299<span class="tag">&lt;/<span class="name">gml:lowerCorner</span>&gt;</span></span><br><span class="line">			<span class="tag">&lt;<span class="name">gml:upperCorner</span>&gt;</span>103.64592937676031 36.038435280283<span class="tag">&lt;/<span class="name">gml:upperCorner</span>&gt;</span></span><br><span class="line">		<span class="tag">&lt;/<span class="name">gml:Envelope</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">fes:Intersects</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">fes:Filter</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>注意这是WFS 2.0.0的写法，1.0.0和1.1.0是不同的。具体参考<a href="https://docs.geoserver.org/latest/en/user/filter/function.html" target="_blank" rel="noopener">Filter functions</a>和<a href="https://docs.geoserver.org/latest/en/user/filter/function_reference.html" target="_blank" rel="noopener">Filter Function Reference</a></p>
+<p>根据2.0的参考手册，<del>很容易就</del>构造出了请求URL：<br><a href="http://localhost:8080/geoserver/map/wfs?FILTER=" target="_blank" rel="noopener">http://localhost:8080/geoserver/map/wfs?FILTER=</a>&lt;fes:Filter xmlns:fes=”<a href="http://www.opengis.net/fes/2.0&quot;" target="_blank" rel="noopener">http://www.opengis.net/fes/2.0&quot;</a> xmlns:gml=”<a href="http://www.opengis.net/gml/3.2&quot;&gt;" target="_blank" rel="noopener">http://www.opengis.net/gml/3.2&quot;&gt;</a><a href="fes:Intersects" target="_blank" rel="noopener">fes:Intersects</a><a href="fes:ValueReference" target="_blank" rel="noopener">fes:ValueReference</a>map:geom&lt;gml:Envelope srsName=”EPSG:4490”&gt;<a href="gml:lowerCorner" target="_blank" rel="noopener">gml:lowerCorner</a>103.6458293767603 36.03833528028299<a href="gml:upperCorner" target="_blank" rel="noopener">gml:upperCorner</a>103.64592937676031 36.038435280283&amp;TYPENAME=map:t_oil,map:t_fiber&amp;REQUEST=GetFeature&amp;OUTPUTFORMAT=application/json&amp;VERSION=2.0.0&amp;SERVICE=WFS（解码后的URL）</p>
+<p>其中：</p>
+<ol>
+<li>TYPENAME表示我要查询的图层，这里一定要注意，<strong>不是TYPENAMES，是TYPENAME</strong>；TYPENAMES也是WFS GetFeature时会使用的参数，当使用多个图层的时候，眼看着使用TYPENAMES比使用TYPENAME合理，甚至在GeoServer的<a href="https://docs.geoserver.org/latest/en/user/services/wfs/reference.html" target="_blank" rel="noopener">WFS reference</a>中解释typeNames时专门还注明了在1.1.0或者更早的版本中使用typeName，然而，使用TYPENAMES查询多图层时会报错，查询单图层却时可用，我甚至怀疑这是GeoServer的一个BUG。</li>
+<li>FILTER是构造的查询条件，当然也支持属性查询，此处只讨论几何查询。</li>
+<li>其他的都是WMS和WFS请求的常规参数了。</li>
+</ol>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2019/GeoServer-WFS-多图层几何查询/";
+  var disqus_url = "http://zxhm.me/2019/GeoServer-WFS-多图层几何查询/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2019 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
