@@ -14,7 +14,7 @@
     <link rel="icon" href="/favicon.ico">
   
     
-  <title>Graphhopper中使用PostGIS数据 | Hello Map</title>
+  <title>男女平等问题的一点想法 | Hello Map</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
   <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -60,36 +60,28 @@
   <div class="content">
     <article>
         <section class="content markdown-body">
-          <h1>Graphhopper中使用PostGIS数据</h1>
+          <h1>男女平等问题的一点想法</h1>
           <div class='post-meta'>
-            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2019年07月09日</time>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2019年12月23日</time>
             
             
               | 
-                  <i class="fa fa-tags" aria-hidden="true"></i>
+                  <i class="fa fa-tag" aria-hidden="true"></i>
                 
                
-  <a href="/tags/#PostGIS" class='tag'>PostGIS</a>
-
-  <a href="/tags/#导航" class='tag'>导航</a>
+  <a href="/tags/#杂谈" class='tag'>杂谈</a>
 
 
             
           </div>
-          <h3 id="Graphhopper"><a href="#Graphhopper" class="headerlink" title="Graphhopper"></a>Graphhopper</h3><p><a href="https://www.graphhopper.com" target="_blank" rel="noopener">Graphhopper</a>是一个开源的地图导航引擎，主要支持OpenStreetMap的OSM数据格式，实现如下图的效果。其在0.11以及版本有一个Reader，可以读取Shape数据；有个老哥参考Shape数据的Reader开发了<a href="https://github.com/mbasa/graphhopper/tree/postgis-0.11" target="_blank" rel="noopener">PostGIS数据库的Reader</a>。但是在0.12版本时，Graphhopper团队从主项目中去除了Shape的Reader，并表示以后只支持OSM。</p>
-<p><img src="http://qiniu.myshuju.net/blog/images/Ashampoo_Snap_2019.07.09_01h03m33s_001_.png" alt="Graphhoper"></p>
-<p>实际上即便是之前Shapefile的Reader还是别人做的PostGIS的Reader都非常不完善，只能计算出线路数据，无法得到比如“继续行驶到XX路”“保持右行到XX路”中路的名称，因此即使使用较老版本的Graphhopper或者自己将其他格式老版本的Reader升级成新版本的，也无法完美的使用其功能。要完美使用Graphhopper的功能，最好的还是使用OSM数据。</p>
-<h3 id="OSM数据的劣势"><a href="#OSM数据的劣势" class="headerlink" title="OSM数据的劣势"></a>OSM数据的劣势</h3><p>OSM是采用XML标签来存储地理数据的，相对于同采用XML来存储的GML、KML格式来说，可读性都算是差的，比结构化的Shape数据或者PostGIS相差就更远了。因此比如要批量修改一些路的信息，OSM就非常不方便，但对于结构化的数据就很容易了。我在项目中遇到的情况是可能根据人流量来修改某条路在路径规划时的权重，因此最初没有考虑直接使用OSM数据，而是使用PostGIS。</p>
-<p>不过随着对Graphhopper了解的加深，我发现OSM的劣势被降的很低。因为Graphhopper并不直接使用OSM数据或者其他Reader读的数据进行导航，他在启动时首先会根据数据生成网络，在导航时只会使用网络，数据就没用了。因此即便我数据中线路的权重是实时变化的，也无法在Graphhopper直接使用，只能一段时间生成一次网络。在这个过程中，是直接使用PostGIS生成无法显示路名的网络，还是先把PostGIS转成OSM生成完美的网络，中间都需要一个过程，只不后者多了几步罢了，差别不大。</p>
-<h3 id="PostGIS转OSM"><a href="#PostGIS转OSM" class="headerlink" title="PostGIS转OSM"></a>PostGIS转OSM</h3><p>讲怎么将OSM数据导入PostGIS数据库的帖子很多，但是几乎没找到怎么将PostGIS的地理数据转成OSM的。所以我采用了通用数据转换工具，FME。FME Writer的配置如下：</p>
-<p><img src="http://qiniu.myshuju.net/blog/images/Ashampoo_Snap_2019.07.09_01h42m05s_002_.png" alt="FME Writer配置"></p>
-<p>其中，</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">osm_id：数字，唯一值</span><br><span class="line">maxspeed：限速，0表示不限速</span><br><span class="line">oneway：是否单行道，yes/no/-1，-1表示与线绘制方向相反</span><br><span class="line">fclass：道路类型，primary，tertiary，具体参考OSM道路分级，Graphhopper生成网格时主要以此为权重</span><br><span class="line">name：道路名称</span><br></pre></td></tr></table></figure>
-
-<p>但是转完之后直接用于Graphhopper是会报错的，也许是我输入的参数不完整，也许是FME转出的文件不太规范，反正就是不能用。此时可以用一个叫JOSM的OSM数据编辑软件将其打开，然后另存一下，就OK了。</p>
-<blockquote>
-<p>注：OSM的Path不支持太多节点的线，我没查到最大值是多少，根据我的实验，两千个点应该差不多是上限。因此如果线太复杂，需要简化才能处理。</p>
-</blockquote>
+          <p>上周去天津谈项目，顺便去了趟北京到我最好的哥们那住了几天，顺便见了几个在北京的好朋友。当然他们是早知道我现在单身了，只是聊的时候都一脸惋惜。后来跟我那个最好的哥们聊起的时候，他的感情生活也不是很顺利，在抱怨的时候，我说，没在一起的时候什么都好，在一起了之后问题都来了。他说，就是，不应该谈这么久，应该没谈多久就结婚，谈这么久基本都要凉了。我顺口说了一句，最好先搞怀孕，这当然只是开玩笑的混账话。</p>
+<p>今天看新闻，看到中国国际经济交流中心副理事长黄奇帆在第十八届中国经济论坛提出如果妇女退休年龄从现在的50岁变革为60岁，甚至是和男性一样延长到65岁，每年相当于增加1万亿元养老金，必将缓和许多省份养老保险资金链紧张的情况，而且一年产生一两万亿元红利进医保，还能多了几亿妇女10年的工作，又产生劳动力红利。全网一片骂声，凤凰网发起的投票上，对这政策的反对率大幅度超过支持率。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20191223173830.jpg" alt="投票结果"></p>
+<p>如图所示，我是支持妇女延迟退休十年的。不是说这么粗暴的直接提升十年，因为国家让交社保的时候跟女性说好了50岁就不用交了，就可以领退休金了，现在凭空多交十年，少领十年，国家与公民之间应该是隐性合同的关系，国家准备违约就应该付违约金。</p>
+<p>我为什支持女性延迟退休，因为这对女性好，对年轻男性也好，唯一的受害者是年长的男性。我们说了这么多年男女平等，毛时代的口号是妇女能顶半边天，但到了今天，男女好像越来越不平等。女性觉得女生在职场上男女不平等，找工作时备受歧视，公司不愿意招女生，就算招了，同等能力的情况下，男性也容易比女性更容易升职加薪。男性觉得在择偶上不平等，两个人结婚，偏偏要求男生要有房有车，还得要给彩礼。</p>
+<p>现在女性50岁退休，男性65岁退休，意味着什么？意味着男人用从20岁到50岁的30岁黄金时间，积累到了大量的技能、经验、阅历、人脉，现在有15年的时间将这些的价值发挥出来；但是女性不行，她们花了30年的时间积累，然后退休，尽付东流水！如果你是一个公司的老板，你是愿意把资源投注在男性身上还是女性身上？没有疑问，所以在国内很少有女性的高管、高官，除非她们优秀到30年做的事情可以比拟男性45年做的事情，谈何容易，男性又不都是坐吃等死之辈。</p>
+<p>当然女性也意识到了自己能创造价值的时间只有30年，所以她们必须在30年的时间里拿到比拟男人45年能拿到的价值，方能往后余生，活得安全，活得平等？但这不可能，一套房，一辆车，加彩礼，普通二线城市，小一百万，那是女人用年轻的资本和独特的优势挣得的小小的一点补偿。扪心自问，有多少女性，或者有多少人认为自己累积到50岁，之后15年，只能挣区区一百万呢。</p>
+<p>所以，什么孕假、提前退休，甚至之前提到的姨妈假，名义上是为女性着想，实质上是在剥夺女性的竞争能力。而女性竞争能力被剥夺，就必须在其最有议价能力的时候求取相应的补偿，但是这个补偿是无论如何也是达不到竞争力带来的价值的（这难道能算递弱代偿？？？）。有时候我甚至在想，国家给少数民族这么多优惠政策，会不会让他们一代更比一代废材，因为就算再多优惠政策，也不会货真价实的提高个人的真实竞争力，最终弱鸡都会被丢到强者群中去竞争然后成原味吮指鸡或者黄金脆皮鸡，如果真的会，那会不会是故意的呢哈哈哈哈。</p>
 
         </section>
     </article>
@@ -112,13 +104,6 @@
   </div>
   <aside>
     
-    <div class="toc-container">
-        <h1>目录</h1>
-        <div class="content">
-            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Graphhopper"><span class="toc-number">1.</span> <span class="toc-text">Graphhopper</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OSM数据的劣势"><span class="toc-number">2.</span> <span class="toc-text">OSM数据的劣势</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#PostGIS转OSM"><span class="toc-number">3.</span> <span class="toc-text">PostGIS转OSM</span></a></li></ol>
-        </div>
-    </div>
-    
   </aside>
 </main>
 
@@ -126,8 +111,8 @@
 <script type="text/javascript">
   /* * * CONFIGURATION VARIABLES * * */
   var disqus_shortname = "zxhm";
-  var disqus_identifier = "http://zxhm.me/2019/Graphhopper中使用PostGIS数据/";
-  var disqus_url = "http://zxhm.me/2019/Graphhopper中使用PostGIS数据/";
+  var disqus_identifier = "http://zxhm.me/2019/男女平等问题的一点想法/";
+  var disqus_url = "http://zxhm.me/2019/男女平等问题的一点想法/";
 
   isAgent(getDisqus)
 
