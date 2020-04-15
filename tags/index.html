@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang=zh-CN>
   <head><meta name="generator" content="Hexo 3.9.0">
-  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="sogou_site_verification" content="rZCOURJedr">
   <meta name="baidu-site-verification" content="MHKqWQPYmp">
@@ -17,23 +17,11 @@
   <title>Hello Map</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
-  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"><!-- hexo-inject:begin -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <script>
-  if (window.netlifyIdentity) {
-    window.netlifyIdentity.on("init", user => {
-      if (!user) {
-        window.netlifyIdentity.on("login", () => {
-          document.location.href = "/admin/";
-        });
-      }
-    });
-  }
-  </script><!-- hexo-inject:end -->
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 
 <body>
-  <!-- hexo-inject:begin --><!-- hexo-inject:end --><header>
+  <header>
   <div class="header-container">
     <a class='logo' href="/">
       <span>Hello Map</span>
@@ -90,19 +78,19 @@
       
           <a href="#证书" title="证书" rel="1">证书</a>
       
+          <a href="#Leaflet" title="Leaflet" rel="1">Leaflet</a>
+      
           <a href="#osmdroid" title="osmdroid" rel="1">osmdroid</a>
       
           <a href="#Android" title="Android" rel="1">Android</a>
       
           <a href="#ArcgisServer" title="ArcgisServer" rel="1">ArcgisServer</a>
       
-          <a href="#Leaflet" title="Leaflet" rel="1">Leaflet</a>
-      
-          <a href="#杂谈" title="杂谈" rel="5">杂谈</a>
-      
           <a href="#Mysql" title="Mysql" rel="1">Mysql</a>
       
           <a href="#宝塔面板" title="宝塔面板" rel="1">宝塔面板</a>
+      
+          <a href="#杂谈" title="杂谈" rel="5">杂谈</a>
       
   </div>
   
@@ -280,6 +268,23 @@
   </div>
   
   <div class="tag-list">
+      <span class="fa fa-tag listing-seperator" id="Leaflet">
+          <span class="tag-text">Leaflet</span>
+      </span>
+      
+        <div class="post-preview">
+            <a href="/2019/leaflet做导航/">
+                <h2 class="post-title">
+                    leaflet做导航
+                </h2>
+                
+            </a>
+            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
+        </div>
+      
+  </div>
+  
+  <div class="tag-list">
       <span class="fa fa-tag listing-seperator" id="osmdroid">
           <span class="tag-text">osmdroid</span>
       </span>
@@ -331,80 +336,6 @@
   </div>
   
   <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="Leaflet">
-          <span class="tag-text">Leaflet</span>
-      </span>
-      
-        <div class="post-preview">
-            <a href="/2019/leaflet做导航/">
-                <h2 class="post-title">
-                    leaflet做导航
-                </h2>
-                
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </div>
-      
-  </div>
-  
-  <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="杂谈">
-          <span class="tag-text">杂谈</span>
-      </span>
-      
-        <div class="post-preview">
-            <a href="/2019/历史重要吗/">
-                <h2 class="post-title">
-                    历史重要吗
-                </h2>
-                
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </div>
-      
-        <div class="post-preview">
-            <a href="/2020/我反对立法禁食猫狗/">
-                <h2 class="post-title">
-                    我反对立法禁食猫狗
-                </h2>
-                
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </div>
-      
-        <div class="post-preview">
-            <a href="/2019/农村·老人·自杀·死亡/">
-                <h2 class="post-title">
-                    农村·老人·自杀·死亡
-                </h2>
-                
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </div>
-      
-        <div class="post-preview">
-            <a href="/2019/男女平等问题的一点想法/">
-                <h2 class="post-title">
-                    男女平等问题的一点想法
-                </h2>
-                
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </div>
-      
-        <div class="post-preview">
-            <a href="/2019/记一次打酱油的监理经历/">
-                <h2 class="post-title">
-                    记一次打酱油的监理经历
-                </h2>
-                
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </div>
-      
-  </div>
-  
-  <div class="tag-list">
       <span class="fa fa-tag listing-seperator" id="Mysql">
           <span class="tag-text">Mysql</span>
       </span>
@@ -437,6 +368,63 @@
         </div>
       
   </div>
+  
+  <div class="tag-list">
+      <span class="fa fa-tag listing-seperator" id="杂谈">
+          <span class="tag-text">杂谈</span>
+      </span>
+      
+        <div class="post-preview">
+            <a href="/2019/农村·老人·自杀·死亡/">
+                <h2 class="post-title">
+                    农村·老人·自杀·死亡
+                </h2>
+                
+            </a>
+            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
+        </div>
+      
+        <div class="post-preview">
+            <a href="/2020/我反对立法禁食猫狗/">
+                <h2 class="post-title">
+                    我反对立法禁食猫狗
+                </h2>
+                
+            </a>
+            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
+        </div>
+      
+        <div class="post-preview">
+            <a href="/2019/历史重要吗/">
+                <h2 class="post-title">
+                    历史重要吗
+                </h2>
+                
+            </a>
+            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
+        </div>
+      
+        <div class="post-preview">
+            <a href="/2019/男女平等问题的一点想法/">
+                <h2 class="post-title">
+                    男女平等问题的一点想法
+                </h2>
+                
+            </a>
+            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
+        </div>
+      
+        <div class="post-preview">
+            <a href="/2019/记一次打酱油的监理经历/">
+                <h2 class="post-title">
+                    记一次打酱油的监理经历
+                </h2>
+                
+            </a>
+            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
+        </div>
+      
+  </div>
     
   </div>
 </main>
@@ -450,7 +438,7 @@
       Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
     </div> -->
   </div>
-</footer><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</footer>
 
 
 
