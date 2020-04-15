@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang=zh-CN>
   <head><meta name="generator" content="Hexo 3.9.0">
-  <meta charset="UTF-8">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="sogou_site_verification" content="rZCOURJedr">
   <meta name="baidu-site-verification" content="MHKqWQPYmp">
@@ -17,11 +17,23 @@
   <title>归档 | Hello Map</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
-  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"><!-- hexo-inject:begin -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+  if (window.netlifyIdentity) {
+    window.netlifyIdentity.on("init", user => {
+      if (!user) {
+        window.netlifyIdentity.on("login", () => {
+          document.location.href = "/admin/";
+        });
+      }
+    });
+  }
+  </script><!-- hexo-inject:end -->
 </head>
 
 <body>
-  <header>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><header>
   <div class="header-container">
     <a class='logo' href="/">
       <span>Hello Map</span>
@@ -194,7 +206,7 @@
       Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
     </div> -->
   </div>
-</footer>
+</footer><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 
 
 

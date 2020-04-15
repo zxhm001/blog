@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang=zh-CN>
   <head><meta name="generator" content="Hexo 3.9.0">
-  <meta charset="UTF-8">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="sogou_site_verification" content="rZCOURJedr">
   <meta name="baidu-site-verification" content="MHKqWQPYmp">
@@ -17,11 +17,23 @@
   <title>Hello Map</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
-  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"><!-- hexo-inject:begin -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+  if (window.netlifyIdentity) {
+    window.netlifyIdentity.on("init", user => {
+      if (!user) {
+        window.netlifyIdentity.on("login", () => {
+          document.location.href = "/admin/";
+        });
+      }
+    });
+  }
+  </script><!-- hexo-inject:end -->
 </head>
 
 <body>
-  <header>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><header>
   <div class="header-container">
     <a class='logo' href="/">
       <span>Hello Map</span>
@@ -72,11 +84,11 @@
       
           <a href="#导航" title="导航" rel="2">导航</a>
       
-          <a href="#Leaflet" title="Leaflet" rel="1">Leaflet</a>
+          <a href="#PHP" title="PHP" rel="1">PHP</a>
       
-          <a href="#Mysql" title="Mysql" rel="1">Mysql</a>
+          <a href="#STMP" title="STMP" rel="1">STMP</a>
       
-          <a href="#宝塔面板" title="宝塔面板" rel="1">宝塔面板</a>
+          <a href="#证书" title="证书" rel="1">证书</a>
       
           <a href="#osmdroid" title="osmdroid" rel="1">osmdroid</a>
       
@@ -84,13 +96,13 @@
       
           <a href="#ArcgisServer" title="ArcgisServer" rel="1">ArcgisServer</a>
       
+          <a href="#Leaflet" title="Leaflet" rel="1">Leaflet</a>
+      
           <a href="#杂谈" title="杂谈" rel="5">杂谈</a>
       
-          <a href="#PHP" title="PHP" rel="1">PHP</a>
+          <a href="#Mysql" title="Mysql" rel="1">Mysql</a>
       
-          <a href="#STMP" title="STMP" rel="1">STMP</a>
-      
-          <a href="#证书" title="证书" rel="1">证书</a>
+          <a href="#宝塔面板" title="宝塔面板" rel="1">宝塔面板</a>
       
   </div>
   
@@ -217,14 +229,14 @@
   </div>
   
   <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="Leaflet">
-          <span class="tag-text">Leaflet</span>
+      <span class="fa fa-tag listing-seperator" id="PHP">
+          <span class="tag-text">PHP</span>
       </span>
       
         <div class="post-preview">
-            <a href="/2019/leaflet做导航/">
+            <a href="/2020/PHPMailer也可能需要证书/">
                 <h2 class="post-title">
-                    leaflet做导航
+                    PHPMailer也可能需要证书
                 </h2>
                 
             </a>
@@ -234,14 +246,14 @@
   </div>
   
   <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="Mysql">
-          <span class="tag-text">Mysql</span>
+      <span class="fa fa-tag listing-seperator" id="STMP">
+          <span class="tag-text">STMP</span>
       </span>
       
         <div class="post-preview">
-            <a href="/2020/一次升级MySQL版本的记录/">
+            <a href="/2020/PHPMailer也可能需要证书/">
                 <h2 class="post-title">
-                    一次升级MySQL版本的记录
+                    PHPMailer也可能需要证书
                 </h2>
                 
             </a>
@@ -251,14 +263,14 @@
   </div>
   
   <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="宝塔面板">
-          <span class="tag-text">宝塔面板</span>
+      <span class="fa fa-tag listing-seperator" id="证书">
+          <span class="tag-text">证书</span>
       </span>
       
         <div class="post-preview">
-            <a href="/2020/一次升级MySQL版本的记录/">
+            <a href="/2020/PHPMailer也可能需要证书/">
                 <h2 class="post-title">
-                    一次升级MySQL版本的记录
+                    PHPMailer也可能需要证书
                 </h2>
                 
             </a>
@@ -319,14 +331,31 @@
   </div>
   
   <div class="tag-list">
+      <span class="fa fa-tag listing-seperator" id="Leaflet">
+          <span class="tag-text">Leaflet</span>
+      </span>
+      
+        <div class="post-preview">
+            <a href="/2019/leaflet做导航/">
+                <h2 class="post-title">
+                    leaflet做导航
+                </h2>
+                
+            </a>
+            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
+        </div>
+      
+  </div>
+  
+  <div class="tag-list">
       <span class="fa fa-tag listing-seperator" id="杂谈">
           <span class="tag-text">杂谈</span>
       </span>
       
         <div class="post-preview">
-            <a href="/2019/农村·老人·自杀·死亡/">
+            <a href="/2019/历史重要吗/">
                 <h2 class="post-title">
-                    农村·老人·自杀·死亡
+                    历史重要吗
                 </h2>
                 
             </a>
@@ -344,9 +373,9 @@
         </div>
       
         <div class="post-preview">
-            <a href="/2019/历史重要吗/">
+            <a href="/2019/农村·老人·自杀·死亡/">
                 <h2 class="post-title">
-                    历史重要吗
+                    农村·老人·自杀·死亡
                 </h2>
                 
             </a>
@@ -376,14 +405,14 @@
   </div>
   
   <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="PHP">
-          <span class="tag-text">PHP</span>
+      <span class="fa fa-tag listing-seperator" id="Mysql">
+          <span class="tag-text">Mysql</span>
       </span>
       
         <div class="post-preview">
-            <a href="/2020/PHPMailer也可能需要证书/">
+            <a href="/2020/一次升级MySQL版本的记录/">
                 <h2 class="post-title">
-                    PHPMailer也可能需要证书
+                    一次升级MySQL版本的记录
                 </h2>
                 
             </a>
@@ -393,31 +422,14 @@
   </div>
   
   <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="STMP">
-          <span class="tag-text">STMP</span>
+      <span class="fa fa-tag listing-seperator" id="宝塔面板">
+          <span class="tag-text">宝塔面板</span>
       </span>
       
         <div class="post-preview">
-            <a href="/2020/PHPMailer也可能需要证书/">
+            <a href="/2020/一次升级MySQL版本的记录/">
                 <h2 class="post-title">
-                    PHPMailer也可能需要证书
-                </h2>
-                
-            </a>
-            <!-- <p class="post-meta">{{ post.date | date:"%Y-%m-%d" }}</p> -->
-        </div>
-      
-  </div>
-  
-  <div class="tag-list">
-      <span class="fa fa-tag listing-seperator" id="证书">
-          <span class="tag-text">证书</span>
-      </span>
-      
-        <div class="post-preview">
-            <a href="/2020/PHPMailer也可能需要证书/">
-                <h2 class="post-title">
-                    PHPMailer也可能需要证书
+                    一次升级MySQL版本的记录
                 </h2>
                 
             </a>
@@ -438,7 +450,7 @@
       Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
     </div> -->
   </div>
-</footer>
+</footer><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 
 
 
