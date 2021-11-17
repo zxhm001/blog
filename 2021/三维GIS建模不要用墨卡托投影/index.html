@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>三维GIS建模不要用墨卡托投影 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>三维GIS建模不要用墨卡托投影</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2021年11月12日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#3D" class='tag'>3D</a>
+
+  <a href="/tags/#Cesium" class='tag'>Cesium</a>
+
+  <a href="/tags/#坐标系" class='tag'>坐标系</a>
+
+
+            
+          </div>
+          <p>使用Cesium做三维特别是房屋白模啥的，通常会用3DTiles，这种情况我通常用FME来生成，不管我的数据是什么坐标系，他都会自己处理好坐标系的问题。直到我需添加单个房屋模型时，glb模型文件就成了比较好的选择，但是在加的过程中遇到了很多问题，特别是建模的时候基础线框使用了比较通用的墨卡托投影坐标系的数据导致模型大小不对的问题，亏自己搞了十年GIS了，刚遇到的时候竟然没意识到这个问题，真是蠢透了。</p>
+<h2 id="Cesium的三维空间坐标系"><a href="#Cesium的三维空间坐标系" class="headerlink" title="Cesium的三维空间坐标系"></a>Cesium的三维空间坐标系</h2><p>首先记录一个跟标题没啥关系，但也是加载过程中遇到的问题。这跟Cesium的三维空间坐标轴有关，Cesium的三维空间坐标系是这样的</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/48590-20190802171817441-773828282.jpg" alt="Cesium三维空间坐标轴"></p>
+<p>但是建模软件，比如我用的Sketchup Pro的坐标轴却有所不同，蓝色是Z轴，红色是X轴，绿色是Y轴。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/skecthup%E5%9D%90%E6%A0%87%E8%BD%B4.png" alt="Sketchup三维空间坐标轴"></p>
+<p>跟Cesium坐标轴相比，Sketchup的X轴和Y轴都得顺时针转个90°，因此导出的模型也会有差别，不同的建模软件可能会不同，记录这个事情就行。</p>
+<h2 id="墨卡托投影的变形"><a href="#墨卡托投影的变形" class="headerlink" title="墨卡托投影的变形"></a>墨卡托投影的变形</h2><p>其实说明标题的问题很简单，因为墨卡托坐标系在长度上是会有变形的，越靠近赤道变形越少，越靠近两极变化越大</p>
+<p>有<a href="https://www.zhihu.com/people/geohey" target="_blank" rel="noopener">大佬</a>做了一个演示摩卡他投影的<a href="(https://cdn.hujiulong.com/geohey/blog/mercator/play.html)">小游戏</a>，下面也贴了游戏的演示动画。可以理解成有一个内切地球的圆柱，地球中心放一盏灯，将地球投影到圆柱上。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/v2-3afbd9d12532ec8b2ea08c255a6b4ee1_b.gif" alt="墨卡托投影演示动画"></p>
+<p>通过演示可以看出，周长为2πR的球，投影出来的地图是一个变成变成为2πR的正方形。在赤道，长度为2πR投影距离也是2πR，实际长度和投影长度的比是1，没有变形，实际上我在想到这个问题之后真的跑去osm下了一点印度尼西亚的数据试了下。在维度为ϕ的地方，纬线周长为2πR*cos(ϕ)，投影长度仍然是2πR，实际长度和投影长度的比是cos(ϕ)。</p>
+<p>如果已经用墨卡托投影做了很多模型，在Cesium里面也不是不能用，根据模型所在的维度将变换比例算出来然后还原即可，不过得注意，高度不能还原。</p>
+<h2 id="高斯-克吕格投影的变形"><a href="#高斯-克吕格投影的变形" class="headerlink" title="高斯-克吕格投影的变形"></a>高斯-克吕格投影的变形</h2><p>不能用墨卡托投影，再一个比较常用的就是高斯-克吕格投影了，其实高斯投影与墨卡托投影类似，是一种横轴墨卡托投影。不同之处在于高斯-克吕格的圆柱体沿经线而不是赤道接触球体或椭圆体，且只正投影中央经线两侧一定范围的椭球面。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/bd315c6034a85edf3606297449540923dc5475db.webp" alt="高斯克吕格投影"></p>
+<p>高斯-克吕格投影的中央经线无变形，自中央经线向投影带边缘，变形逐渐增加，变形最大之处在投影带内赤道的两端。<br>其变形公式为：</p>
+<p>$μ = 1+ 1/2λ^2cos^2(1+η^2) + 1/24λ^2cos^2ϕ(5-4tan^2ϕ)+…$</p>
+<p>其中μ是长度比，ϕ是纬度，λ是经度与中央经线经度差，$η=e’cosϕ$，嗯，算起来挺麻烦的，好在查论文查到了别人算的数据</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20211117181342.png" alt="高斯克吕格投影变形"></p>
+<p>可以看到，高斯-克吕格投影的长度和面积变形是很小的，到房屋模型这么大的比例尺，用三度带，最大经差1.5°，我国最南端北纬20°左右，变形量千分之三左右。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>三维GIS建模的时候不要随便使用墨卡托投影，除非在赤道附近，可以使用高斯-克吕格投影，我试验下来的效果也很好。</p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Cesium的三维空间坐标系"><span class="toc-number">1.</span> <span class="toc-text">Cesium的三维空间坐标系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#墨卡托投影的变形"><span class="toc-number">2.</span> <span class="toc-text">墨卡托投影的变形</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#高斯-克吕格投影的变形"><span class="toc-number">3.</span> <span class="toc-text">高斯-克吕格投影的变形</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2021/三维GIS建模不要用墨卡托投影/";
+  var disqus_url = "http://zxhm.me/2021/三维GIS建模不要用墨卡托投影/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2021 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
