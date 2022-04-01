@@ -116,6 +116,9 @@
 
 <p>最后在使用的时候</p>
 <figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line">[<span class="meta">HttpPost</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;<span class="keyword">string</span>&gt; <span class="title">SetFileServerAsync</span>(<span class="params">FileServerDto fileDto</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    _middlewareInjectorOptions.InjectMiddleware(app =&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        app.UseCors(options =&gt;</span><br><span class="line">        &#123;</span><br><span class="line">            options.AllowAnyOrigin()</span><br><span class="line">                    .AllowAnyHeader()</span><br><span class="line">                    .AllowAnyMethod();</span><br><span class="line">        &#125;);</span><br><span class="line">        <span class="keyword">var</span> fileServerOption = <span class="keyword">new</span> FileServerOptions();</span><br><span class="line">        fileServerOption.RequestPath = fileDto.UrlPath;</span><br><span class="line">        fileServerOption.FileProvider = <span class="keyword">new</span> PhysicalFileProvider(fileDto.PhysicalPath);</span><br><span class="line">        fileServerOption.StaticFileOptions.ServeUnknownFileTypes = <span class="literal">true</span>;</span><br><span class="line">        fileServerOption.EnableDirectoryBrowsing = <span class="literal">true</span>;</span><br><span class="line">        app.UseFileServer(fileServerOption);</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"success"</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>大功告成，补完上一篇文章的漏洞。</p>
+
         </section>
     </article>
     
