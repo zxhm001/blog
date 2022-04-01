@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>用FME创造大量随机位置的测试数据 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>用FME创造大量随机位置的测试数据</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2020年04月30日</time>
+            
+            
+              | 
+                  <i class="fa fa-tag" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#FME" class='tag'>FME</a>
+
+
+            
+          </div>
+          <p>因为在国内测绘数据属于保密数据，我们做项目的时候很多时候只能拿到很小很小的一部分测试数据，有时候这部分测试数据都不是真实数据而是造的假数据。因为造数据实际上挺费事的，所以通常这个数据不会太多，可能就几十条上百条了不起，有的甚至就几条。然而真实世界的地理数据通常是几万条几十万条几百万条的。也许处理几十条数据的系统和处理几千条数据的系统不会有啥区别，但是处理几十条数据的系统和处理几十万条数据的系统的差别绝对是巨大的。以我上一篇博文为例，看起来可以在几百几千条数据上运行的代码，在几十万条数据上运行就需要十几分钟甚至可能导致系统卡死，因此造出大量的测试数据就很有必要。</p>
+<p>无论如何对于程序员来说，通过代码来造大量的测试数据总是第一选择，但这并不是最快的选择，在GIS领域有一个数据处理神器——<a href="http://www.fme-china.com/" target="_blank" rel="noopener">FME</a>，当然也是说FME只能处理GIS数据，以我使用的经验来看，只要是结构化数据他处理起来都还挺好用的。</p>
+<p>言归正传，来聊怎么用FME造大量测试数据。FME是什么怎么用我就不废话了，官方有<a href="http://www.fme-china.com/html/kownledge.html" target="_blank" rel="noopener">中文文档</a>，总的来说一个典型的FME工程是包括一个数据读取器，一个数据写入器，中间通过各种数据转换器连接起来，把数据搓圆捏扁。我们创造大量测试数据，就是以最开始小批量测试数据为基础，对数据进行循环赋值，再对复制之后的数据进行位置和属性的变换，就可以了。</p>
+<p>但是我们在FME转换器里搜索一下，发现是没有复制要素这个转换器的，这里就有了第一个技巧，如下图，我分了两条线，第一条是直接输出，第二条我先创建一个属性，然后移除一个属性，等于啥都没干，但因为走了两条线，就是双份输出，等于是复制了。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/%E6%89%B9%E6%B3%A8%202020-04-30%20214049.png" alt="复制"></p>
+<p>第二个就是自定义循环转换器了，通常一个自定义的，带循环的转换器是如下图结构的，<code>循环器</code>是必须的，他可以指定循环到哪个输入器，所以Loop实际上是一个<code>输入器</code>，只不过一般把他的属性设置为不发布，处理过的数据要从哪里开始循环，就把这个输入器连到哪里。<code>Tester</code>转换器也是必须的，他需要判定符合什么调教的时候循环，符合什么条件的时候输出，否则就成了死循环了。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/%E6%89%B9%E6%B3%A8%202020-04-30%20215710.png" alt="自定义循环转换器"></p>
+<p>第三个就是发布参数了，自定义转换器完成之后发布参数就可以成为自定义转换器的可以修改的参数，比如咱们使用复制的方式创造大量测试数据，复制多少份，就可以用发布参数来设置。</p>
+<p>最后，贴上自己的创造随机位置测试数据的自定义转换器<code>RandomCopy</code>，进来先创造一个LoopCount属性来标记循环了多少次，每次循环之后+1，两个<code>RandomNumberGenerator</code>分别创造随机平移的X值和Y值，<code>Offsetter</code>对对象平移，<code>Tester</code>判定LoopCount是否小于要复制的份数，小于的话继续循环，否则输出。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/%E6%89%B9%E6%B3%A8%202020-04-30%20220411.png" alt="RandomCopy"></p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2020/2020/用FME创造大量随机位置的测试数据/";
+  var disqus_url = "http://zxhm.me/2020/2020/用FME创造大量随机位置的测试数据/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>

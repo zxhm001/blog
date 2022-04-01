@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>Graphhopper中使用PostGIS数据 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>Graphhopper中使用PostGIS数据</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2019年07月09日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#PostGIS" class='tag'>PostGIS</a>
+
+  <a href="/tags/#导航" class='tag'>导航</a>
+
+
+            
+          </div>
+          <h3 id="Graphhopper"><a href="#Graphhopper" class="headerlink" title="Graphhopper"></a>Graphhopper</h3><p><a href="https://www.graphhopper.com" target="_blank" rel="noopener">Graphhopper</a>是一个开源的地图导航引擎，主要支持OpenStreetMap的OSM数据格式，实现如下图的效果。其在0.11以及版本有一个Reader，可以读取Shape数据；有个老哥参考Shape数据的Reader开发了<a href="https://github.com/mbasa/graphhopper/tree/postgis-0.11" target="_blank" rel="noopener">PostGIS数据库的Reader</a>。但是在0.12版本时，Graphhopper团队从主项目中去除了Shape的Reader，并表示以后只支持OSM。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/Ashampoo_Snap_2019.07.09_01h03m33s_001_.png" alt="Graphhoper"></p>
+<p>实际上即便是之前Shapefile的Reader还是别人做的PostGIS的Reader都非常不完善，只能计算出线路数据，无法得到比如“继续行驶到XX路”“保持右行到XX路”中路的名称，因此即使使用较老版本的Graphhopper或者自己将其他格式老版本的Reader升级成新版本的，也无法完美的使用其功能。要完美使用Graphhopper的功能，最好的还是使用OSM数据。</p>
+<h3 id="OSM数据的劣势"><a href="#OSM数据的劣势" class="headerlink" title="OSM数据的劣势"></a>OSM数据的劣势</h3><p>OSM是采用XML标签来存储地理数据的，相对于同采用XML来存储的GML、KML格式来说，可读性都算是差的，比结构化的Shape数据或者PostGIS相差就更远了。因此比如要批量修改一些路的信息，OSM就非常不方便，但对于结构化的数据就很容易了。我在项目中遇到的情况是可能根据人流量来修改某条路在路径规划时的权重，因此最初没有考虑直接使用OSM数据，而是使用PostGIS。</p>
+<p>不过随着对Graphhopper了解的加深，我发现OSM的劣势被降的很低。因为Graphhopper并不直接使用OSM数据或者其他Reader读的数据进行导航，他在启动时首先会根据数据生成网络，在导航时只会使用网络，数据就没用了。因此即便我数据中线路的权重是实时变化的，也无法在Graphhopper直接使用，只能一段时间生成一次网络。在这个过程中，是直接使用PostGIS生成无法显示路名的网络，还是先把PostGIS转成OSM生成完美的网络，中间都需要一个过程，只不后者多了几步罢了，差别不大。</p>
+<h3 id="PostGIS转OSM"><a href="#PostGIS转OSM" class="headerlink" title="PostGIS转OSM"></a>PostGIS转OSM</h3><p>讲怎么将OSM数据导入PostGIS数据库的帖子很多，但是几乎没找到怎么将PostGIS的地理数据转成OSM的。所以我采用了通用数据转换工具，FME。FME Writer的配置如下：</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/Ashampoo_Snap_2019.07.09_01h42m05s_002_.png" alt="FME Writer配置"></p>
+<p>其中，</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">osm_id：数字，唯一值</span><br><span class="line">maxspeed：限速，0表示不限速</span><br><span class="line">oneway：是否单行道，yes/no/-1，-1表示与线绘制方向相反</span><br><span class="line">fclass：道路类型，primary，tertiary，具体参考OSM道路分级，Graphhopper生成网格时主要以此为权重</span><br><span class="line">name：道路名称</span><br></pre></td></tr></table></figure>
+
+<p>但是转完之后直接用于Graphhopper是会报错的，也许是我输入的参数不完整，也许是FME转出的文件不太规范，反正就是不能用。此时可以用一个叫JOSM的OSM数据编辑软件将其打开，然后另存一下，就OK了。</p>
+<blockquote>
+<p>注：OSM的Path不支持太多节点的线，我没查到最大值是多少，根据我的实验，两千个点应该差不多是上限。因此如果线太复杂，需要简化才能处理。</p>
+</blockquote>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Graphhopper"><span class="toc-number">1.</span> <span class="toc-text">Graphhopper</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OSM数据的劣势"><span class="toc-number">2.</span> <span class="toc-text">OSM数据的劣势</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#PostGIS转OSM"><span class="toc-number">3.</span> <span class="toc-text">PostGIS转OSM</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2019/2019/Graphhopper中使用PostGIS数据/";
+  var disqus_url = "http://zxhm.me/2019/2019/Graphhopper中使用PostGIS数据/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>

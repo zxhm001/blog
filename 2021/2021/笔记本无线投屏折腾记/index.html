@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>笔记本无线投屏折腾记 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>笔记本无线投屏折腾记</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2021年04月26日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#杂谈" class='tag'>杂谈</a>
+
+  <a href="/tags/#PC" class='tag'>PC</a>
+
+
+            
+          </div>
+          <p>好久没写博客了，记录一个折腾。</p>
+<p>最近写文档有点多，经常要几个文档之间倒腾，一个屏幕真是很蛋疼，有一个工具帮了我一点忙。Power Toys的FancyZones，可以在一个屏幕里分几块区域，shift拖动某个窗口就可以放进一个区域内，很方便，如果是带鱼屏，那就真是太方便了。Power Toys虽然叫Toys，但是真的是非常Power，很好用，在这里不介绍。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202021-04-26%20150754.png" alt="FancyZones"></p>
+<p>我的电脑不是带鱼屏，FancyZones的力量没法发挥到最大。但是我不止一台电子设备啊，我有一台台式机，两台笔记本，一个平板电脑，如果把其他电子设备当做主力电脑的第二块屏幕岂不是爽歪歪。要实现这样的功能，方案主要有两个种，一种是类似<a href="https://github.com/pavlobu/deskreen" target="_blank" rel="noopener">Deskreen</a>这样的投屏软件，不过要实现屏幕扩展，就需要买一个HDMI显卡欺骗器，挺便宜，几块钱顶多十几块；第二种是Miracast技术，Miracast是由Wi-Fi联盟于2012年所制定，以Wi-Fi直连（Wi-Fi Direct）为基础的无线显示标准，现在的手机系统支持无线投屏，也都是这种技术，Windows10也只支持的，既支持把Windows10作为接收端，也支持把Winddows10作为发送端。</p>
+<p>Windows10作为接收端：</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202021-04-26%20152828.png" alt="接收端"></p>
+<p>Windows10作为发送端：</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2021/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20210426153014.png" alt="发送端"></p>
+<p>要使用Miracast技术，有两个条件：</p>
+<ol>
+<li>WIFI，双方在同一个WIFI下，有线网络是不行的，且无线网卡要支持，在dxdiag导出的信息里搜Miracast，可以找到相关信息。</li>
+<li>显卡要支持。其实在dxdiag的信息里我这边台式机和笔记本都显示<code>Miracast: Not Supported by Graphics driver</code>，结果其实都能用，就很迷。</li>
+</ol>
+<p>接下来问题就来了，连不上怎么办？</p>
+<ol>
+<li>防火墙，把接收端的应用程序加入防火墙允许访问列表，应用程序地址：<code>C:\Windows\SystemApps\Microsoft.PPIProjection_cw5n1h2txyewy\Receiver.exe</code>，<code>cw5n1h2txyewy</code>我猜这一串不是固定的，不确定。</li>
+<li>服务。保证<code>WMPNetworkSvc</code>和<code>SSDPSRV</code>这两个服务是启动的。网上看到的，原因不知道。</li>
+<li>保证<code>控制面板\网络和 Internet\网络和共享中心\媒体流选项</code>启动。网上看到的，原因不知道。</li>
+</ol>
+<p>其实上面三个我都没遇到，我直接开启了就能连上了，只不过我一连上马上就断开了，我以为我连不上，且界面上展示<code>无法在此设备上查看受保护内容</code>，以此为关键字搜出了上面的三点内容。那么问题来了，眼见着连上了，接收端都显示了正在连接了，马上又断了，是啥情况。</p>
+<p>我这边遇到的，显卡问题。<strong>毫不新鲜的笔记本的显卡问题，集显就是不行，无论如何把相关的应用程序设置成独显启动，都不行，只有禁用掉集显才行</strong>。虽然很迷，没有查这东西跟显卡有啥关系，在Intel管网查到我的集显也是支持Miracast的，而且更新了最新的驱动，然而并没有啥用，记录一下吧。</p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2021/2021/笔记本无线投屏折腾记/";
+  var disqus_url = "http://zxhm.me/2021/2021/笔记本无线投屏折腾记/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
