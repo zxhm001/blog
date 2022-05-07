@@ -84,11 +84,12 @@
 </blockquote>
 <p>这个说法也对也不对，在<code>app.Run()</code>之后确实没法加入新的中间件了，ASP .Net Core管道中的中间件是有顺序的，<code>app.Run()</code>不接收next参数，也就是在之后加入的中间件是怎么也不会通过的。不对的地方在于实际上是可以通过((IApplicationBuilder)app).New()来新建一个拥有一模一样的管道，来替换掉原来的管道的，新建之后加入需要的中间件然后Run，就可以了。</p>
 <ol start="2">
-<li><p>我上篇文章开启服务用的方法是UseStaticFiles和UseDirectoryBrowser，这也不能说错，但是不够简洁，实际上ASP .Net Core除了提供UseStaticFiles和UseDirectoryBrowser，还提供了一个综合两者的功能UseFileServer，使用方法如下：</p>
+<li>我上篇文章开启服务用的方法是UseStaticFiles和UseDirectoryBrowser，这也不能说错，但是不够简洁，实际上ASP .Net Core除了提供UseStaticFiles和UseDirectoryBrowser，还提供了一个综合两者的功能UseFileServer，使用方法如下：</li>
+</ol>
 <figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> fileServerOption = <span class="keyword">new</span> FileServerOptions();</span><br><span class="line">fileServerOption.RequestPath = urlPath;</span><br><span class="line">fileServerOption.FileProvider = <span class="keyword">new</span> PhysicalFileProvider(physicalPath);</span><br><span class="line">fileServerOption.StaticFileOptions.ServeUnknownFileTypes = <span class="literal">true</span>;</span><br><span class="line">fileServerOption.EnableDirectoryBrowsing = <span class="literal">true</span>;</span><br><span class="line">app.UseFileServer(fileServerOption);</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>还有最最最大一个错误，我在之前的文章里是使用新端口另开服务来实现的，使用dotnet命令不指定端口号启动应用时没有问题，但当指定端口号或者使用IIS这样的WEB容器来部署时就没法开启除配置之外的端口了。</p>
-</li>
+
+<ol start="3">
+<li>还有最最最大一个错误，我在之前的文章里是使用新端口另开服务来实现的，使用dotnet命令不指定端口号启动应用时没有问题，但当指定端口号或者使用IIS这样的WEB容器来部署时就没法开启除配置之外的端口了。</li>
 </ol>
 <h2 id="中间件"><a href="#中间件" class="headerlink" title="中间件"></a>中间件</h2><p>讲Asp .Net Core中间件的文章蛮多的，<a href="https://docs.microsoft.com/zh-cn/aspnet/core/fundamentals/middleware/?view=aspnetcore-6.0" target="_blank" rel="noopener">官方文档</a>也很详细，我简单说下，他的概念是应用收到网络请求后，会经过一系列处理，然后响应，这个流程就好像水流过自来水管一样，所以叫管道。中间各种处理流程就是中间件，通过<code>app.Use()</code>来注册，最后响应是用<code>app.Run()</code>，因此<code>app.Run()</code>算是管道的出口。还有一个<code>app.Map()</code>，是用来定义分支的，就好像自来水管的分叉，每个分支最终也要用<code>app.Run()</code>来定义出口。</p>
 <p><code>app.Map()</code>的使用方式大概是这样：</p>
