@@ -79,7 +79,7 @@
             
           </div>
           <blockquote>
-<p><strong>注：正常在WEB上显示三维地形首选Cesium，本文内容仅作为研究，展示文章<a href="用DEM制作通用三维地形模型.md">用DEM制作通用三维地形模型</a>中制作的局部三维地形模型</strong></p>
+<p><strong>注：正常在WEB上显示三维地形首选Cesium，本文内容仅作为研究，展示文章<a href="http://zxhm.me/2022/2022/用DEM制作通用三维地形模型/">用DEM制作通用三维地形模型</a>中制作的局部三维地形模型</strong></p>
 </blockquote>
 <p>Cesium是可以很容易的实现在WEB端三维地形的，下面的图是分别是使用基于Cesium的<a href="http://mars3d.cn/editor-vue.html?id=thing/terrain/contourLine" target="_blank" rel="noopener">Mars3D</a>和超图的<a href="http://support.supermap.com.cn:8090/webgl/examples/webgl/editor.html#STKterrain" target="_blank" rel="noopener">iClient3D</a>出来的效果。不过Cesium终究是基于地球的，比较适合大块区域的展示。和文章<a href="http://zxhm.me/2022/2022/用DEM制作通用三维地形模型/">用DEM制作通用三维地形模型</a>里做的模型效果来比，还是差点意思，资源占用也很高。加上因为三维模型都是笛卡尔坐标系，我们在制作模型的时候也使用了高斯克吕格投影坐标系，直接整个模型加到球形的Cesium里再缩放到一个县的范围那么大，必然是不能处处对应准的，所以那篇文章的成果就不太适合用Cesium展示了。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220809015658.png" alt="Mars3D实现效果"><br><img src="http://qiniu.myshuju.net/blog/images/2022/20220809020122.png" alt="SuperMap iClient3D实现效果"></p>
 <p>理论上只要支持gltf的webgl库比如three.js等都是可以展示我再上篇文章中生成的地形模型的，我使用的<a href="https://www.babylonjs.com/" target="_blank" rel="noopener">babylon.js</a>，我在之前文章<a href="http://zxhm.me/2021/2021/蓝牙Beacon室内定位全栈/">蓝牙Beacon室内定位全栈</a>里有用过，功能比较强大，可以说是一个WebGL的三维引擎也不为过。</p>
