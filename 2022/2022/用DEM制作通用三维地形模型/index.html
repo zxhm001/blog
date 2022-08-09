@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>用DEM制作通用三维地形模型 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>用DEM制作通用三维地形模型</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2022年08月09日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#3D" class='tag'>3D</a>
+
+  <a href="/tags/#DEM" class='tag'>DEM</a>
+
+  <a href="/tags/#Blender" class='tag'>Blender</a>
+
+
+            
+          </div>
+          <p>我很久很久之前有一个想法，就是把名山大川的地形做成三维模型，然后用3D打印机给打印出来，拿来卖钱。当然这个想法没有实施，一来相对于平面来说，其实名山的地形高差不够，比如庐山范围东西南北长度都在20公里以上，但是庐山最高峰才不到1500米，那么出来的模型长款得是高度的20倍，显然是很不合适的。二来模型出来也很丑，除了地形就是光秃秃的，要在地形级别尺度的模型上去打印树木，那就太看得起现在的3D打印机了，就连想普通的地形图一样分高程渐变着色，一般的3D打印机都做不到。虽然打印出来比较难，不过不妨碍我研究一下怎么制作出来模型。下面是制作步骤。</p>
+<ol>
+<li><p>下载DEM，DEM数据有很多免费公开的，可以<a href="http://www.gscloud.cn/" target="_blank" rel="noopener">去地理空间数据云</a>或者NASA的<a href="https://search.earthdata.nasa.gov" target="_blank" rel="noopener">EarthData</a>上去下载，我下载的GDEMV3，V3看起来就比V2和V1要厉害一点的样子。如果是地理空间可以使用高级检索选择范围，EarthData可以自己上传范围检索。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1660007302130.png" alt="DEM下载"></p>
+</li>
+<li><p>下载之后用ArcGIS的Data Management&gt;Raster&gt;Raster Dataset&gt;Mosaic To New Raster工具把多幅数据合并成一幅数据。这里如果使用ArcMap，先把数据加进来再合并可能会很迷惑，会发现合并之后的数据的最大值最小值跟加在地图上的几份数据不一致。这是因为原数据并没有进行统计，ArcMap加的时候应该是为了加载速度，没有扫描数据的每个像素值，只做了采样就渲染了，所以他渲染图例显示的最大值最小值并不是数据真实的最大值最小值。可以在ArcCatalog的数据属性里把原数据统计一下，就不会有这个问题了。</p>
+</li>
+<li><p>DEM裁切，使用ArcGIS的Spatial Analyst&gt;EXtract&gt;Extract by Mask工具使用相应的范围面裁切DEM得到一个范围的DEM。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1660007603382.png" alt="范围内DEM"></p>
+</li>
+<li><p>DEM拉升。<del>blender可读取的通常是16位无符号的整型数据，也就是说如果我们的dem包含小数或者负数，需要进行转换处理；当前dem的像素范围是从50到2236，在blender中是以像素值为高度来进行拉伸的，像素范围小会导致渲染出来的3D图高度跳跃，不够平滑，将像素范围拉伸到0-65535，既能满足数据类型的要求，也保障后续的三维立体平滑效果。</del>使用ArcGIS的Spatial Analyst&gt;Map Algebra&gt;Raster Calculator工具进行计算，计算公式为如下，之所以在65535后面减20000，是为了把整体抬高，之后处理时把NoData设置成0，这样最低点和没数据的部分就不会融在一起了。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">(&quot;DEM&quot;-MIN) * (65535-20000) / (MAX-MIN) + 20000</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<blockquote>
+<p>上面一步来自于M姐实验室的教程<a href="https://mp.weixin.qq.com/s/XHTePXn81uP3l475-A5aHQ" target="_blank" rel="noopener"># 3D地质图制作：GeoScene Pro+Blender</a>，但是她这种做法渲染出图可以，没法导出成模型。她的模型形成是用的着色器的置换，着色器在各个三维平台是不兼容的，所以也就没法导出成通用模型。所以扩大到65535来平滑没有必要了，但把数值抬高于与NoData区分这一步是有必要的。</p>
+</blockquote>
+<ol start="5">
+<li><p>用PS或者其他图形软件打开DEM拉伸之后tif数据，把数据另存为PNG。把这个PNG复制一份副本。</p>
+</li>
+<li><p>打开Blender，删除掉默认的内容。然后添加一个平面，调整他的大小，大小按DEM影像的像素来，比如我的影像是3343×2255，我的平面尺寸就是33.43m×22.55m，当然这个数值其实只要比例对就OK，但是合适的数值会比较方便后期的坐标映射。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659862711050.png" alt="创建平面"></p>
+</li>
+<li><p>选中平面，按Tab键进入编辑模式，右键&gt;细分，切割次数填最大值100。然后选中所有切割出的平面，再次细分，这次切割次数填3。这个可以自己调整，理论上切分的越成的模型就会越精细，但是切分的越细数据就会越大。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659863167034.png" alt="细分平面"></p>
+</li>
+<li><p>按Tab进入物体模式，选中平面，在纹理属性处新建两个笔刷，在图像处分别选择保存的PNG和PNG副本。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659863618920.png" alt="创建纹理"></p>
+</li>
+<li><p>选中平面，在修改器属性中新建一个置换修改器，关联刚刚新建的纹理，可以看到地形的模型已经出来了。如果切分的不够多，模型可能不够精细，可以右键&gt;平滑着色一下，效果会好一些。如果在3.0或以上版本，可能默认是没有修改器的，需要在插件里面去勾上。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659863752832.png" alt="添加修改器"></p>
+</li>
+<li><p>选中平面，在材质属性界面新建一个材质槽位和一个材质。<br><img src="http://qiniu.myshuju.net/blog/images/2022/16598640262481.png" alt="添加材质"></p>
+</li>
+<li><p>到Shading工作空间，把保存的PNG图片拉进着色器编辑器，并进行如下连接。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659864114892.png" alt="着色器"></p>
+</li>
+<li><p>在图片输入和原理化BSDF之间添加一个颜色渐变节点(添加&gt;转换器&gt;颜色渐变)，接下来调整颜色到如下图。这里得多分几个关键颜色点，不然blender不知道怎么通过线型算中间色。另外最左边应该专门添加一个关键颜色点作为没有数据的底色，真正的最小值配色稍往右移，这也就是我们之前拉升DEM的时候专门抬高的用处了。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220807172928.png" alt="渐变着色"></p>
+</li>
+<li><p>因为着色器不通用，这样通过颜色渐变来的效果是没法导出的，因此我们需要把效果烘培成贴图。为了提高烘培效果，我们先给场景添加日光，位置Z30米，强度2。<br>![[1659864949529.png]]<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659864949529.png" alt="设置光照"></p>
+</li>
+<li><p>然后烘培。选中平面，渲染使用Cycles引擎，设备选择GPU计算，找到下面的烘培选项卡，点击烘培，等待烘培完成。这里使用GPU会比CPU快不少。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659865013003.png" alt="烘焙"></p>
+</li>
+<li><p>这时候再观察地形模型，发现我们的模型已经不对了，因为我们的纹理已经变成了烘培过之后的彩色图片，数据就不对了。我们需要在修改器属性中置换修改器的关联纹理改成另一个使用副本数据的。</p>
+</li>
+<li><p>到UV Editing或者Texture Paint工作空间，反正是有图像编辑器的就行，图像&gt;另存为，使用原名字，颜色使用RGBA，保存。这个保存通常非常大，之后可以用PS之类的图形软件稍微压缩下，但不能使用8位色图像。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220807174427.png" alt="保存烘焙后的纹理"></p>
+</li>
+<li><p>到Shading工作空间的着色器编辑器中，删除颜色渐变节点。然后把图片和原理化BSDF连接起来，就得到了一个可以方便导出，没有复杂着色器的模型了。<br>![[1659865634165.png]]<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659865634165.png" alt="最终着色器"></p>
+</li>
+<li><p>文件&gt;导出&gt;glTF 2.0，勾选几何数据&gt;应用修改器，就可以得到通用格式，web可用，有材质的glb三维地形模型了。<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659865849595.png" alt="模型导出"></p>
+</li>
+</ol>
+<p>效果如下：<br><img src="http://qiniu.myshuju.net/blog/images/2022/1659865953220.png" alt="效果图"></p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2022/2022/用DEM制作通用三维地形模型/";
+  var disqus_url = "http://zxhm.me/2022/2022/用DEM制作通用三维地形模型/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>WEB端显示三维地形模型 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>WEB端显示三维地形模型</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2022年08月09日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#3D" class='tag'>3D</a>
+
+  <a href="/tags/#前端" class='tag'>前端</a>
+
+  <a href="/tags/#DEM" class='tag'>DEM</a>
+
+
+            
+          </div>
+          <blockquote>
+<p><strong>注：正常在WEB上显示三维地形首选Cesium，本文内容仅作为研究，展示文章<a href="用DEM制作通用三维地形模型.md">用DEM制作通用三维地形模型</a>中制作的局部三维地形模型</strong></p>
+</blockquote>
+<p>Cesium是可以很容易的实现在WEB端三维地形的，下面的图是分别是使用基于Cesium的<a href="http://mars3d.cn/editor-vue.html?id=thing/terrain/contourLine" target="_blank" rel="noopener">Mars3D</a>和超图的<a href="http://support.supermap.com.cn:8090/webgl/examples/webgl/editor.html#STKterrain" target="_blank" rel="noopener">iClient3D</a>出来的效果。不过Cesium终究是基于地球的，比较适合大块区域的展示。和文章<a href="用DEM制作通用三维地形模型.md">用DEM制作通用三维地形模型</a>里做的模型效果来比，还是差点意思，资源占用也很高。加上因为三维模型都是笛卡尔坐标系，我们在制作模型的时候也使用了高斯克吕格投影坐标系，直接整个模型加到球形的Cesium里再缩放到一个县的范围那么大，必然是不能处处对应准的，所以那篇文章的成果就不太适合用Cesium展示了。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220809015658.png" alt="Mars3D实现效果"><br><img src="http://qiniu.myshuju.net/blog/images/2022/20220809020122.png" alt="SuperMap iClient3D实现效果"></p>
+<p>理论上只要支持gltf的webgl库比如three.js等都是可以展示我再上篇文章中生成的地形模型的，我使用的<a href="https://www.babylonjs.com/" target="_blank" rel="noopener">babylon.js</a>，我在之前文章<a href="http://zxhm.me/2021/2021/蓝牙Beacon室内定位全栈/">蓝牙Beacon室内定位全栈</a>里有用过，功能比较强大，可以说是一个WebGL的三维引擎也不为过。</p>
+<p>babylon.js的使用比较方便，引入babylon.js和加载gltf的babylonjs.loaders.js，使用canvas进行渲染。</p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="meta-keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"utf-8"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"description"</span> <span class="attr">content</span>=<span class="string">""</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"viewport"</span> <span class="attr">content</span>=<span class="string">"width=device-width, initial-scale=1, shrink-to-fit=no"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">title</span>&gt;</span>三维地形<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span> <span class="attr">media</span>=<span class="string">"all"</span> <span class="attr">href</span>=<span class="string">"./css/index.css"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./lib/babylon/babylon.js"</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./lib/babylon/loaders/babylonjs.loaders.js"</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">canvas</span> <span class="attr">id</span>=<span class="string">"renderCanvas"</span>&gt;</span><span class="tag">&lt;/<span class="name">canvas</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./js/projection.js"</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"./js/index.js"</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>首先初始化引擎和场景</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> _canvas,_engine,_scene,_camera;</span><br><span class="line"></span><br><span class="line">_canvas = <span class="built_in">document</span>.getElementById(<span class="string">'renderCanvas'</span>);</span><br><span class="line">_engine = <span class="keyword">new</span> BABYLON.Engine(_canvas, <span class="literal">true</span>);</span><br><span class="line">_scene = createScene();</span><br><span class="line">_engine.runRenderLoop(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (_scene.activeCamera) &#123;</span><br><span class="line">		_scene.render();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">//创建场景</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> createScene = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> scene = <span class="keyword">new</span> BABYLON.Scene(_engine);</span><br><span class="line">    _camera = <span class="keyword">new</span> BABYLON.ArcRotateCamera(<span class="string">'camera'</span>, <span class="built_in">Math</span>.PI/<span class="number">2</span>, <span class="built_in">Math</span>.PI/<span class="number">4</span>, <span class="number">30</span>, <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>));</span><br><span class="line">    _camera.inputs.attached.mousewheel.wheelPrecision = <span class="number">8</span>;</span><br><span class="line">    _camera.inputs.attached.pointers.panningSensibility = <span class="number">250</span>;</span><br><span class="line">    _camera.inputs.attached.pointers.angularSensibilityX = <span class="number">5000</span>;</span><br><span class="line">    _camera.inputs.attached.pointers.angularSensibilityY = <span class="number">5000</span>;</span><br><span class="line">    _camera.attachControl(_canvas, <span class="literal">true</span>);</span><br><span class="line">    <span class="keyword">const</span> light = <span class="keyword">new</span> BABYLON.HemisphericLight(<span class="string">'light'</span>, <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>));</span><br><span class="line">    <span class="keyword">return</span> scene;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在创建引擎和场景的时候，为了方便调试，可以在场景中把坐标轴展示出来，很可惜babylon.js不原生支持坐标轴展示，需要手动画上去。</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="comment">//创建坐标轴</span></span><br><span class="line"><span class="keyword">const</span> showAxis = <span class="function"><span class="keyword">function</span> (<span class="params">size</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> makeTextPlane = <span class="function"><span class="keyword">function</span> (<span class="params">text, color, size</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">const</span> dynamicTexture = <span class="keyword">new</span> BABYLON.DynamicTexture(<span class="string">'DynamicTexture'</span>, <span class="number">50</span>, _scene, <span class="literal">true</span>);</span><br><span class="line">        dynamicTexture.hasAlpha = <span class="literal">true</span>;</span><br><span class="line">        dynamicTexture.drawText(text, <span class="number">5</span>, <span class="number">40</span>, <span class="string">'bold 36px Arial'</span>, color, <span class="string">'transparent'</span>, <span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">const</span> plane = <span class="keyword">new</span> BABYLON.Mesh.CreatePlane(<span class="string">'TextPlane'</span>, size, _scene, <span class="literal">true</span>);</span><br><span class="line">        plane.material = <span class="keyword">new</span> BABYLON.StandardMaterial(<span class="string">'TextPlaneMaterial'</span>, _scene);</span><br><span class="line">        plane.material.backFaceCulling = <span class="literal">false</span>;</span><br><span class="line">        plane.material.specularColor = <span class="keyword">new</span> BABYLON.Color3(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">        plane.material.diffuseTexture = dynamicTexture;</span><br><span class="line">        <span class="keyword">return</span> plane;</span><br><span class="line">    &#125;; </span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> axisX = BABYLON.Mesh.CreateLines(<span class="string">'axisX'</span>, [</span><br><span class="line">        <span class="keyword">new</span> BABYLON.Vector3.Zero(), <span class="keyword">new</span> BABYLON.Vector3(size, <span class="number">0</span>, <span class="number">0</span>), <span class="keyword">new</span> BABYLON.Vector3(size * <span class="number">0.95</span>, <span class="number">0.05</span> * size, <span class="number">0</span>),</span><br><span class="line">        <span class="keyword">new</span> BABYLON.Vector3(size, <span class="number">0</span>, <span class="number">0</span>), <span class="keyword">new</span> BABYLON.Vector3(size * <span class="number">0.95</span>, <span class="number">-0.05</span> * size, <span class="number">0</span>)</span><br><span class="line">    ], _scene);</span><br><span class="line"></span><br><span class="line">    axisX.color = <span class="keyword">new</span> BABYLON.Color3(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">const</span> xChar = makeTextPlane(<span class="string">'X'</span>, <span class="string">'red'</span>, size / <span class="number">10</span>);</span><br><span class="line">    xChar.position = <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0.9</span> * size, <span class="number">-0.05</span> * size, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> axisY = BABYLON.Mesh.CreateLines(<span class="string">'axisY'</span>, [</span><br><span class="line">        <span class="keyword">new</span> BABYLON.Vector3.Zero(), <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, size, <span class="number">0</span>), <span class="keyword">new</span> BABYLON.Vector3(<span class="number">-0.05</span> * size, size * <span class="number">0.95</span>, <span class="number">0</span>),</span><br><span class="line">        <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, size, <span class="number">0</span>), <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0.05</span> * size, size * <span class="number">0.95</span>, <span class="number">0</span>)</span><br><span class="line">    ], _scene);</span><br><span class="line">    axisY.color = <span class="keyword">new</span> BABYLON.Color3(<span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">const</span> yChar = makeTextPlane(<span class="string">'Y'</span>, <span class="string">'green'</span>, size / <span class="number">10</span>);</span><br><span class="line">    yChar.position = <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">0.9</span> * size, <span class="number">-0.05</span> * size);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> axisZ = BABYLON.Mesh.CreateLines(<span class="string">'axisZ'</span>, [</span><br><span class="line">        <span class="keyword">new</span> BABYLON.Vector3.Zero(), <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">0</span>, size), <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">-0.05</span> * size, size * <span class="number">0.95</span>),</span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">0</span>, size), <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">0.05</span> * size, size * <span class="number">0.95</span>)</span><br><span class="line"></span><br><span class="line">    ], _scene);</span><br><span class="line">    axisZ.color = <span class="keyword">new</span> BABYLON.Color3(<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">const</span> zChar = makeTextPlane(<span class="string">'Z'</span>, <span class="string">'blue'</span>, size / <span class="number">10</span>);</span><br><span class="line">    zChar.position = <span class="keyword">new</span> BABYLON.Vector3(<span class="number">0</span>, <span class="number">0.05</span> * size, <span class="number">0.9</span> * size);</span><br><span class="line"></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>加载DEM glb文件</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="comment">//加载DEM</span></span><br><span class="line">BABYLON.SceneLoader.LoadAssetContainer(<span class="string">'./'</span>,<span class="string">'asset/dem.glb'</span> , _scene, <span class="function"><span class="keyword">function</span> (<span class="params">container</span>) </span>&#123;</span><br><span class="line">	container.meshes[<span class="number">0</span>].id = <span class="string">'__dem__'</span>;</span><br><span class="line">	container.meshes[<span class="number">0</span>].name = <span class="string">'__dem__'</span>;</span><br><span class="line">	container.addAllToScene();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>毕竟这是一个地理数据，难免需要加一些其他地理数据，因此需要实现坐标转换。这里需要再次说明，之前所有的数据制作流程都是使用的高斯克吕格投影投影，为什么要是用高斯克吕格投影请看我的文章<a href="http://zxhm.me/2021/2021/三维GIS建模不要用墨卡托投影/">三维GIS建模不要用墨卡托投影</a>，高斯克吕格投影投影和经纬度之间的坐标转换请看我的文章<a href="http://zxhm.me/2021/2021/蓝牙Beacon室内定位全栈/">蓝牙Beacon室内定位全栈</a>的<code>移动端展示模型</code>部分。单就我这个DEMO来说，还有一点点不同，我使用的坐标系是CGCS2000_3_Degree_GK_Zone_37而不是CGCS2000_3_Degree_GK_CM_111E（两者有啥区别以及为什么会有两种以后有机会再说），加上我们建模的时候不是直接按图像的尺寸来的，有一个缩放，因此在经纬度转成高斯克吕格投影坐标系之后，还需要做一个转换到当前的三维空间坐标，代码如下：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="comment">//经纬度转场景坐标</span></span><br><span class="line"><span class="keyword">const</span> LngLat2XY = <span class="function"><span class="keyword">function</span>(<span class="params">lng,lat</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">const</span> prjPosition = _projection.LngLat2XY(lng,lat);</span><br><span class="line">    <span class="keyword">const</span> dx = (prjPosition[<span class="number">0</span>] + <span class="number">37500000</span>) - _center[<span class="number">0</span>];</span><br><span class="line">    <span class="keyword">const</span> dy = prjPosition[<span class="number">1</span>] - _center[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">const</span> x = dx/_cellSize/<span class="number">100</span>;</span><br><span class="line">    <span class="keyword">const</span> y = dy/_cellSize/<span class="number">100</span>;</span><br><span class="line">    <span class="keyword">return</span> [-x,-y]</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>_center</code>和<code>_cellSize</code>从DEM影像数据的属性信息来。<br><img src="%E9%99%84%E4%BB%B6/20220809101251.png" alt="DEM影像属性"></p>
+<p>然后我们就可以按位置加入一些模型了，比如</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="comment">//加载模型</span></span><br><span class="line"></span><br><span class="line">BABYLON.SceneLoader.LoadAssetContainer(<span class="string">'./'</span>,<span class="string">'asset/camera.glb'</span> , _scene, <span class="function"><span class="keyword">function</span> (<span class="params">container</span>) </span>&#123;</span><br><span class="line">	container.meshes[<span class="number">0</span>].id = <span class="string">'camera_1'</span>;</span><br><span class="line">	container.meshes[<span class="number">0</span>].name = <span class="string">'camera_1'</span>;</span><br><span class="line">	container.meshes[<span class="number">0</span>].scaling = <span class="keyword">new</span> BABYLON.Vector3(<span class="number">15</span>, <span class="number">15</span>, <span class="number">15</span>);</span><br><span class="line">	<span class="keyword">const</span> xy = LngLat2XY(<span class="number">111.288</span>,<span class="number">30.485</span>)</span><br><span class="line">	container.meshes[<span class="number">0</span>].position = <span class="keyword">new</span> BABYLON.Vector3(xy[<span class="number">0</span>], <span class="number">2</span>, xy[<span class="number">1</span>]);</span><br><span class="line">	container.addAllToScene();</span><br><span class="line">	<span class="keyword">const</span> points = [</span><br><span class="line">		<span class="keyword">new</span> BABYLON.Vector3(xy[<span class="number">0</span>], <span class="number">-0.5</span>, xy[<span class="number">1</span>]),</span><br><span class="line">		<span class="keyword">new</span> BABYLON.Vector3(xy[<span class="number">0</span>], <span class="number">2</span>, xy[<span class="number">1</span>])</span><br><span class="line">	];</span><br><span class="line">	<span class="comment">//位置点虚线</span></span><br><span class="line">	<span class="keyword">const</span> line = BABYLON.MeshBuilder.CreateDashedLines(<span class="string">"camera_line"</span>, &#123;</span><br><span class="line">		points: points,</span><br><span class="line">		dashSize: <span class="number">50</span>,</span><br><span class="line">		gapSize: <span class="number">25</span>,</span><br><span class="line">		dashNb: <span class="number">10</span>&#125;);</span><br><span class="line">	line.color = <span class="keyword">new</span> BABYLON.Color3(<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>还可以在上面加Geojson数据，但是我没找到怎么让线贴着地形走的方式。</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">    <span class="keyword">const</span> request = <span class="keyword">new</span> XMLHttpRequest();</span><br><span class="line">    request.open(<span class="string">'get'</span>,<span class="string">'./asset/XZQ.geojson'</span>);</span><br><span class="line">    request.send();</span><br><span class="line">    request.onload = <span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (request.status == <span class="number">200</span>) &#123;</span><br><span class="line">            <span class="keyword">const</span> features = <span class="built_in">JSON</span>.parse(request.responseText).features</span><br><span class="line">            features.forEach(<span class="function"><span class="params">feature</span> =&gt;</span> &#123;</span><br><span class="line">                <span class="keyword">const</span> coords = feature.geometry.coordinates[<span class="number">0</span>][<span class="number">0</span>]</span><br><span class="line">                <span class="keyword">const</span> positons = []</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">let</span> index = <span class="number">0</span>; index &lt; coords.length; index++) &#123;</span><br><span class="line">                    <span class="keyword">const</span> coord = coords[index];</span><br><span class="line">                    <span class="keyword">const</span> xy = LngLat2XY(coord[<span class="number">0</span>],coord[<span class="number">1</span>])</span><br><span class="line">                    positons.push(<span class="keyword">new</span> BABYLON.Vector3(xy[<span class="number">0</span>], <span class="number">0.5</span>, xy[<span class="number">1</span>]))</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">const</span> xzqLine = BABYLON.MeshBuilder.CreateLines(<span class="string">`xzqLine_<span class="subst">$&#123;feature.properties.XZQDM&#125;</span>`</span>, &#123;<span class="attr">points</span>: positons&#125;);</span><br><span class="line">                xzqLine.color = <span class="keyword">new</span> BABYLON.Color3(<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>);</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>我想，既然画上去的线没法贴地，那我可不可以给模型贴材质贴图呢。于是，我把要在上面展示的数据转换坐标系到CGCS2000_3_Degree_GK_Zone_37，通过GeoServer发布成WMS服务，将通过WMS请求回来的图片当做材质贴图贴在模型上。代码如下：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"> <span class="keyword">const</span> url = <span class="string">`<span class="subst">$&#123;_geoserverUrl&#125;</span>/map/wms?SERVICE=WMS&amp;VERSION=1.1.1&amp;REQUEST=GetMap&amp;FORMAT=image/png&amp;TRANSPARENT=true&amp;STYLES&amp;LAYERS=map:xzq&amp;SRS=EPSG:4525&amp;WIDTH=<span class="subst">$&#123;_imgSize[<span class="number">0</span>]&#125;</span>&amp;HEIGHT=<span class="subst">$&#123;_imgSize[<span class="number">1</span>]&#125;</span>&amp;BBOX=<span class="subst">$&#123;xmin&#125;</span>,<span class="subst">$&#123;ymin&#125;</span>,<span class="subst">$&#123;xmax&#125;</span>,<span class="subst">$&#123;ymax&#125;</span>`</span></span><br><span class="line"><span class="keyword">let</span> orgMat = container.meshes[<span class="number">1</span>].material;</span><br><span class="line">orgMat.bumpTexture = <span class="keyword">new</span> BABYLON.Texture(url, _scene);</span><br><span class="line">orgMat.bumpTexture.vScale = <span class="number">-1</span></span><br></pre></td></tr></table></figure>
+
+<p>这里需要注意，请求里的WIDTH和HEIGHT要和建模时使用的图片成比例，我是直接使用的原尺寸。请求里面的BBOX的最大值最小值一定要是用DEM影像属性里的范围，不能错。SRS要是用对应的高斯克吕格坐标系，也不能错。</p>
+<p>最终效果就如图了。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2022/20220809022933.png" alt="最终展示效果"></p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2022/2022/WEB端显示三维地形模型/";
+  var disqus_url = "http://zxhm.me/2022/2022/WEB端显示三维地形模型/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
