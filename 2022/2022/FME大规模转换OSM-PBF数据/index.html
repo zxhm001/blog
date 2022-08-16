@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>FME大规模转换OSM PBF数据 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>FME大规模转换OSM PBF数据</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2022年08月16日</time>
+            
+            
+              | 
+                  <i class="fa fa-tag" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#FME，OSM" class='tag'>FME，OSM</a>
+
+
+            
+          </div>
+          <p>PBF格式主要用于替代OSM原来的XML格式数据。它的大小约是gzip压缩的一半，比bzip压缩小30%。它的写入速度比gzip压缩快5倍，读取速度比gzip压缩快6倍。这种格式的设计是为了支持未来的可扩展性和灵活性<a href="#R1"><sup>1</sup></a>。</p>
+<p>通常下载PBF数据之后，我们只会需要其中部分数据，因为于原有的XML明码数据相比，PBF数据经过压缩，并没有那么好提取，我这里尝试使用FME来提取。</p>
+<p>FME(Feature Manipulate Engine)是加拿大Safe Software公司开发的空间数据转换处理系统，它是完整的空间ETL解决方案。该方案基于OpenGIS组织提出的新的数据转换理念“语义转换”<a href="#R2"><sup>2</sup></a>。FME拥有超过400个不同功能的转换器，能够灵活应对各种数据重组和内容变换任务，并将处理后的信息输出到要求的格式中去，使信息在格式与应用之间自由迁移<a href="#R3"><sup>3</sup></a>。</p>
+<p>我这里使用的FME 2022 64位版本，经过我的测试，相比于2020版本，2022版对PBF的支持更稳定，转换更快。下面简单介绍一下转换步骤。</p>
+<h3 id="缓存目录设置"><a href="#缓存目录设置" class="headerlink" title="缓存目录设置"></a>缓存目录设置</h3><p>这一步是必须的，因为一个大洲的PBF数据通常是上10G，这还是高度压缩过的，解压之后会有好几十G甚至上百G，内存不太可能放得下，需要建立一个缓存目录存放这些临时数据。FME设置缓存目录只需要在环境变量中设置FME_TEMP就可以了，注意选定的文件夹所在盘剩余空间一定要足够大，20G的PBF文件出来的缓存文件会在100G左右。另外如果选定的文件夹所在的盘是固态盘，会提高转换速度。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816100629.png" alt="环境变量设置"></p>
+<h3 id="数据观察"><a href="#数据观察" class="headerlink" title="数据观察"></a>数据观察</h3><p>这一步使用FME的数据浏览器 FME Data Inspector。这一步不需要观察我想提取的原数据，只需要找其中一块观察即可。比如我想提取亚洲的数据，但是亚洲的数据有10G以上，用FME Data Inspector打开要很久很久，单中国的数据1G多，打开也要很久。我们只选一个省份的数据就比较靠谱。如果我想提取交通数据，就可以选择观察长三角这种交通发达的地方比如浙江省的数据；如果我想提取水系数据，就可以选择观察江湖众多的地方比如湖北省的数据。我这里示例的是观察湖北省，提取机场数据。</p>
+<p>观察需要有针对性，我这里提取机场，在打开数据时，可以只选择机场相关的数据。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816102128.png" alt="打开数据"><br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816102531.png" alt="打开数据"></p>
+<p>这里需要注意，aeroway下面还可以展开选的，这个比较重要，需要反复确认自己想要的数据在哪一类。如果不知道，可以勾选大类，打开之后点击数据在属性部分看，这个以大类为属性名的属性值，就是展开后的小类，多查看一些，就知道自己需要的数据在哪些小类了。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816103141.png" alt="数据查看"></p>
+<p>接下来就看自己需要的数据的属性，注意上图，他有两个地方可以查看要素的属性，一个是右侧展示属性有34个字段，一个是下侧的表视图，只有两个字段。默认情况下，如果用FME转换，她的读模块只会读取表视图里面的几条属性，这当然是非常不够的，因此需要自己观察右侧属性窗口里要素有哪些属性，哪些是需要的，记下来。这里要注意，就算是同一种要素，他拥有的属性字段也是不同的，毕竟OSM是众包的模式生产的数据，有的人填了，有的人没填，没填就没有，所以这里需要多看一些数据。</p>
+<h3 id="修改配置文件"><a href="#修改配置文件" class="headerlink" title="修改配置文件"></a>修改配置文件</h3><p>上面说到，默认情况下，FME读取的OSM PBF数据字段是不够用的，我们需要打破这个默认。在FME打开PBF文件时，参数有这么一个选项，就是用来打破默认的。他默认的配置文件是<code>[FME安装文件夹]\xml\osm\fme_map_features_config.xml</code>，把他复制出来，然后修改。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816104055.png" alt="读模块参数"><br>比如我想提取aerodrome的国际航空运输协会机场代码，也就是iata，那我找到aeroway&gt;aerodrome，然后在里面加入属性iata，再勾选上用户自定义的OSM Map要素，地图配置文件选择刚刚复制出来修改过的文件，就可以把这个属性暴露出来了。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816104925.png" alt="自定义读取属性"><br>最后把读模块设置成只暴露需要的属性，写模块设置自动属性，转换器就完成了（我这里输出格式选择的是Shapefile）。然后可以用小数据测试一下，看出来的是不是自己需要的数据。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816105152.png" alt="读模块属性设置"><br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816105352.png" alt="写模块属性设置"></p>
+<h3 id="其他技巧"><a href="#其他技巧" class="headerlink" title="其他技巧"></a>其他技巧</h3><ol>
+<li>经过我的测试，直接使用FME Workbench转换要比保存成.fmw文件之后使用FME Quick Translator调用稳定。</li>
+<li>一次性转大数据，比如欧洲一整块20多个G，他的缓存文件会超过100个G，从这么大的缓存文件里筛选数据速度会慢到离谱，原不如分欧洲各国下数据然后选择多个文件批量转换来的快。<br><img src="http://qiniu.myshuju.net/blog/images/2022/20220816110041.png" alt="多选批量转换"></li>
+</ol>
+<p>参考：</p>
+<div><a name="R1" href="https://wiki.openstreetmap.org/wiki/Zh-hans:PBF_Format" target="_blank" rel="noopener"></a>
+[1] PBF格式Wiki
+</div>
+<div><a name="R2" href="https://baike.baidu.com/item/FME" target="_blank" rel="noopener"></a>
+[2] FME百度百科
+</div>
+<div><a name="R3" href="http://www.fme-china.com/product/" target="_blank" rel="noopener"></a>
+[3] FME管网产品介绍
+</div>
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#缓存目录设置"><span class="toc-number">1.</span> <span class="toc-text">缓存目录设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#数据观察"><span class="toc-number">2.</span> <span class="toc-text">数据观察</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#修改配置文件"><span class="toc-number">3.</span> <span class="toc-text">修改配置文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他技巧"><span class="toc-number">4.</span> <span class="toc-text">其他技巧</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2022/2022/FME大规模转换OSM-PBF数据/";
+  var disqus_url = "http://zxhm.me/2022/2022/FME大规模转换OSM-PBF数据/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
