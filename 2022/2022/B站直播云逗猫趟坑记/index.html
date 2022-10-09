@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>B站直播云逗猫趟坑记 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>B站直播云逗猫趟坑记</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2022年10月09日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#.Net Core" class='tag'>.Net Core</a>
+
+  <a href="/tags/#树莓派" class='tag'>树莓派</a>
+
+  <a href="/tags/#串口开发" class='tag'>串口开发</a>
+
+
+            
+          </div>
+          <p>思路大概就是做一个机械臂，上面安一根逗猫棒，开直播。然后观众通过弹幕指令控制逗猫棒来逗猫。事实证明，这是一次失败的尝试，因为小猫咪并不会按照人类的想法行事，他们根本不去镜头底下营业！当然折腾的过程还是得记录下来。</p>
+<h3 id="设备"><a href="#设备" class="headerlink" title="设备"></a>设备</h3><p>首先在淘宝上买了一个机械臂<br><img src="http://qiniu.myshuju.net/blog/images/2022/20221008171453.png" alt="机械臂"><br>再在淘宝上买了一个舵机控制板<br><img src="http://qiniu.myshuju.net/blog/images/2022/20221008171900.png" alt="舵机控制板"><br>这块控制板我给了中评，他在功能上没啥问题，但是不给USB口通信协议。他们自家的上位机软件(Windows版)可以通过这个USB口来控制这块板子，但是搞开发还非得走串口，好在我恰好有个树莓派4B，就不用买USB/TTL转接器(其实还是买比较好，也不贵，十几块钱，比我接下来蛋疼的折腾省心多了)。</p>
+<h3 id="技术路线"><a href="#技术路线" class="headerlink" title="技术路线"></a>技术路线</h3><ol>
+<li>直播。准备在B站直播，弄两个摄像头，对准猫经常出没的区域。再加上几个文本对玩法做文字说明，这么多内容必然是需要专业的直播软件了，这里使用了常用的OBS。可惜OBS没有ARM版，所以树莓派上是不能运行了，因此需要准备一台专门的，带有独显的电脑推流。</li>
+<li>弹幕抓取。这个没啥好说，基本上复制了萝莉爱萝莉的<a href="https://blog.csdn.net/qq_50682713/article/details/125116647" target="_blank" rel="noopener"> 极简式 Unity 获取 bilibili 直播弹幕、SC、上舰、礼物等 插件</a>。我用了.NET Core平台开发，恰好Unity也是用C#的，所以他的代码我用了99.9%。B站直播弹幕的WebSocket通信详细解析可以看这个文章<a href="https://blog.csdn.net/xfgryujk/article/details/80306776" target="_blank" rel="noopener">获取bilibili直播弹幕的WebSocket协议</a></li>
+<li>机械臂控制。我采用了比较鸡贼的方式，首先通过上位机软件在板子里设定了一些动作组，然后接收到弹幕之后用树莓派给板子发送运行动作组的指令就可以了。</li>
+<li>控制软件。软件是基于.Net Core平台写的桌面软件，.Net Core是跨平台的，界面也用了跨平台的AvaloniaUI，差不多可以理解成跨平台的WPF吧，因此理论上一次编码，可以运行在Windows，Mac，Linux上，实际下来效果也相当好，在ARM平台的的树莓派上运行也还比较稳定。</li>
+</ol>
+<h3 id="坑1：AvaloniaUI汉字显示乱码的问题"><a href="#坑1：AvaloniaUI汉字显示乱码的问题" class="headerlink" title="坑1：AvaloniaUI汉字显示乱码的问题"></a>坑1：AvaloniaUI汉字显示乱码的问题</h3><p>这是因为没有设置支持显示汉字的字体，设置一下就可以了，在App.axaml里面加入以下代码，将微软雅黑或者其他支持汉字的字体设置为默认字体。</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Application.Resources</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">FontFamily</span> <span class="attr">x:Key</span>=<span class="string">"msyh"</span>&gt;</span>Microsoft YaHei<span class="tag">&lt;/<span class="name">FontFamily</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">Application.Resources</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">Application.Styles</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">Style</span> <span class="attr">Selector</span>=<span class="string">"Window"</span>&gt;</span></span><br><span class="line"><span class="xml">		<span class="tag">&lt;<span class="name">Setter</span> <span class="attr">Property</span>=<span class="string">"FontFamily"</span> <span class="attr">Value</span>=<span class="string">"&#123;StaticResource msyh&#125;"</span> /&gt;</span></span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">Style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">Application.Styles</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="坑2：AvaloniaUI的字体跨平台问题"><a href="#坑2：AvaloniaUI的字体跨平台问题" class="headerlink" title="坑2：AvaloniaUI的字体跨平台问题"></a>坑2：AvaloniaUI的字体跨平台问题</h3><p>如果在Windows上用AvaloniaUI开发，然后发布到Linux平台，运行时大概率会遇到报错：<code>System.InvalidOperationException: Default font family name can&#39;t be null or empty</code>。至少我在树莓派Raspberry Pi OS和Linux Mint上都遇到了，这是因为在Windows上设置的默认字体Linux系统没有。所以首先我们要给Linux系统添加微软雅黑字体。</p>
+<p>创建一个文件夹<code>Microsoft YaHei</code></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mkdir Microsoft YaHei</span><br></pre></td></tr></table></figure>
+
+<p>将微软雅黑的TTF文件复制到这个文件夹里面，然后将文件夹复制进<code>/usr/share/fonts/</code></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">cp -R Microsoft YaHei /usr/share/fonts</span><br></pre></td></tr></table></figure>
+
+<p>然后刷新字体缓存</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">fc</span>-cache</span><br></pre></td></tr></table></figure>
+
+<p>接下来就是得让应用能够识别微软雅黑字体了，AvaloniaUI自带一个字体管理类，里面没有对微软雅黑进行支持，因此我们自建一个CustomFontManagerImpl</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">namespace</span> <span class="title">CatLiveX</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">CustomFontManagerImpl</span> : <span class="title">IFontManagerImpl</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">readonly</span> Typeface[] _customTypefaces;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">readonly</span> <span class="keyword">string</span> _defaultFamilyName;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//Load font resources in the project, you can load multiple font resources</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">readonly</span> Typeface _defaultTypeface =</span><br><span class="line">            <span class="keyword">new</span> Typeface(<span class="string">"resm:CatLiveX.Assets.Fonts.msyh#微软雅黑"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">CustomFontManagerImpl</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            _customTypefaces = <span class="keyword">new</span>[] &#123; _defaultTypeface &#125;;</span><br><span class="line">            _defaultFamilyName = _defaultTypeface.FontFamily.FamilyNames.PrimaryFamilyName;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">string</span> <span class="title">GetDefaultFontFamilyName</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            <span class="keyword">return</span> _defaultFamilyName;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> IEnumerable&lt;<span class="keyword">string</span>&gt; <span class="title">GetInstalledFontFamilyNames</span>(<span class="params"><span class="keyword">bool</span> checkForUpdates = <span class="literal">false</span></span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            <span class="keyword">return</span> _customTypefaces.Select(x =&gt; x.FontFamily.Name);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">readonly</span> <span class="keyword">string</span>[] _bcp47 = &#123; CultureInfo.CurrentCulture.ThreeLetterISOLanguageName, CultureInfo.CurrentCulture.TwoLetterISOLanguageName &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">bool</span> <span class="title">TryMatchCharacter</span>(<span class="params"><span class="keyword">int</span> codepoint, FontStyle fontStyle, FontWeight fontWeight, FontFamily fontFamily,</span></span></span><br><span class="line"><span class="function"><span class="params">            CultureInfo culture, <span class="keyword">out</span> Typeface typeface</span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            <span class="keyword">foreach</span> (<span class="keyword">var</span> customTypeface <span class="keyword">in</span> _customTypefaces)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">if</span> (customTypeface.GlyphTypeface.GetGlyph((<span class="keyword">uint</span>)codepoint) == <span class="number">0</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                typeface = <span class="keyword">new</span> Typeface(customTypeface.FontFamily.Name, fontStyle, fontWeight);</span><br><span class="line"></span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">var</span> fallback = SKFontManager.Default.MatchCharacter(fontFamily?.Name, (SKFontStyleWeight)fontWeight,</span><br><span class="line">                SKFontStyleWidth.Normal, (SKFontStyleSlant)fontStyle, _bcp47, codepoint);</span><br><span class="line"></span><br><span class="line">            typeface = <span class="keyword">new</span> Typeface(fallback?.FamilyName ?? _defaultFamilyName, fontStyle, fontWeight);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> IGlyphTypefaceImpl <span class="title">CreateGlyphTypeface</span>(<span class="params">Typeface typeface</span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            SKTypeface skTypeface;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">switch</span> (typeface.FontFamily.Name)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">case</span> FontFamily.DefaultFontFamilyName:</span><br><span class="line">                <span class="keyword">case</span> <span class="string">"微软雅黑"</span>:  <span class="comment">//font family name</span></span><br><span class="line">                <span class="keyword">case</span> <span class="string">"Microsoft YaHei"</span>:</span><br><span class="line">                    skTypeface = SKTypeface.FromFamilyName(_defaultTypeface.FontFamily.Name); </span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="keyword">default</span>:</span><br><span class="line">                    skTypeface = SKTypeface.FromFamilyName(typeface.FontFamily.Name,</span><br><span class="line">                        (SKFontStyleWeight)typeface.Weight, SKFontStyleWidth.Normal, (SKFontStyleSlant)typeface.Style);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> GlyphTypefaceImpl(skTypeface);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后在App.axaml.cs里加入一下代码，将自定义的字体管理器注册一下，问题就解决了。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> override RegisterServices register custom service</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">RegisterServices</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	AvaloniaLocator.CurrentMutable.Bind&lt;IFontManagerImpl&gt;().ToConstant(<span class="keyword">new</span> CustomFontManagerImpl());</span><br><span class="line">	<span class="keyword">base</span>.RegisterServices();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于不需要支持中文的或者不特意指定字体的同志这个问题就好解决的多，只需要给Linux安装微软常用字体就完事了，一条命令的事</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt-get install ttf-mscorefonts-installer</span><br></pre></td></tr></table></figure>
+
+<h3 id="坑3：树莓派串口不稳定"><a href="#坑3：树莓派串口不稳定" class="headerlink" title="坑3：树莓派串口不稳定"></a>坑3：树莓派串口不稳定</h3><p>树莓派开放串口只需要在rasp-config里开启就行，开放之后执行命令<code>ls -l /dev/serial*</code>可以查看串口，这时候有两个，一个是ttyS0、ttyAMA0。ttyAMA0是蓝牙用的串口，ttyS0是mini串口，该串口性能低，功能也简单，并且没有波特率专用的时钟源，而是由CPU内核时钟提供。因此mini串口有个致命的弱点是：波特率受到内核时钟的影响。也就是说，和CPU共用同一时钟，当CPU处理较多任务时，或者低功耗时，你的串口波特率不是稳定的，数据误传、传丢就会成为常态。所以需要将我们的通信串口改成ttyAMA0。对于树莓派4B来说，只需要在/boot/config.txt最后加一行<code>dtoverlay=disable-bt</code>把蓝牙禁用掉，然后重启树莓派，就会发现ttyS0、ttyAMA0的顺序变了。</p>
+<p>另外，树莓派还会默认开启串口登录功能，在我的折腾中，这玩意会导致串口莫名其妙连接失败，返回数据也会经常错误，因此也需要禁用掉，将文件/boot/cmdline.txt里面的<code>console=ttyAMA0,115200</code>删掉，然后重启树莓派即可。</p>
+<h3 id="坑4：推流机器与树莓派联动"><a href="#坑4：推流机器与树莓派联动" class="headerlink" title="坑4：推流机器与树莓派联动"></a>坑4：推流机器与树莓派联动</h3><p>这个我主要是想实现当有人发送弹幕指令或者送礼物时时，直播界面可以展示相关信息。好在OBS是可以读取文本而且可以时时变更的，也就是文本变的时候推流画面中的文字会跟着变。但是因为我的控制程序是在树莓派运行的，OBS是在另一台Windows电脑运行的，因此我想到将树莓派中的文件夹共享，然后挂载成Windows电脑的网络磁盘，让OBS去读。</p>
+<p>这里使用samba来实现树莓派网络共享功能。首先安装samba</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install samba samba-common-bin</span><br></pre></td></tr></table></figure>
+
+<p>我的程序直接放在了树莓派的桌面，也就是在Home的子文件夹下，而且只需要读，所以我都不用配置，直接设置密码就行</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo smbpasswd -a pi</span><br></pre></td></tr></table></figure>
+
+<p>然后用在Windows文件浏览器里输入<code>\\192.168.0.102\pi</code>就可以访问，随后挂载即可。</p>
+<h3 id="坑5：小猫咪不营业"><a href="#坑5：小猫咪不营业" class="headerlink" title="坑5：小猫咪不营业"></a>坑5：小猫咪不营业</h3><p>机械臂控制的逗猫棒根本吸引不到小猫咪，小猫咪也不经常去镜头底下，怎么办怎么办怎么办，求解决方法。<br><img src="http://qiniu.myshuju.net/blog/images/2022/ea082a19fab39d4f30212cf967fafa7.jpg" alt="小猫咪"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>所以说呀，这么多坑都是不必要趟的，一个十几块几十块的USB/TTL转接器解决上面大部分问题，一台Windows电脑，不需要使用跨平台的AvaloniaUI，不需要使用树莓派。只需要解决最后一个也是最难的小猫咪不营业的问题。</p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#设备"><span class="toc-number">1.</span> <span class="toc-text">设备</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#技术路线"><span class="toc-number">2.</span> <span class="toc-text">技术路线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#坑1：AvaloniaUI汉字显示乱码的问题"><span class="toc-number">3.</span> <span class="toc-text">坑1：AvaloniaUI汉字显示乱码的问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#坑2：AvaloniaUI的字体跨平台问题"><span class="toc-number">4.</span> <span class="toc-text">坑2：AvaloniaUI的字体跨平台问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#坑3：树莓派串口不稳定"><span class="toc-number">5.</span> <span class="toc-text">坑3：树莓派串口不稳定</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#坑4：推流机器与树莓派联动"><span class="toc-number">6.</span> <span class="toc-text">坑4：推流机器与树莓派联动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#坑5：小猫咪不营业"><span class="toc-number">7.</span> <span class="toc-text">坑5：小猫咪不营业</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-number">8.</span> <span class="toc-text">总结</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2022/2022/B站直播云逗猫趟坑记/";
+  var disqus_url = "http://zxhm.me/2022/2022/B站直播云逗猫趟坑记/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
