@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>如何优雅的对WinForm窗体应用程序进行权限控制 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>如何优雅的对WinForm窗体应用程序进行权限控制</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2022年11月24日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#.Net" class='tag'>.Net</a>
+
+  <a href="/tags/#WinForm" class='tag'>WinForm</a>
+
+
+            
+          </div>
+          <p>特别复杂特别高大上的系统我还没有机会接触，就我了解的来看，普通的功能权限控制的流程都差不多只有两个过程：</p>
+<ol>
+<li>获取当前用户拥有的权限</li>
+<li>在界面上对功能入库的可用性或者可见性进行控制</li>
+</ol>
+<p>这里说一种在WinForm窗体应用开发时进行权限控制的办法，文章中主要针对上述两个过程的第二步。不过为了说清楚，我先简单说一下我的数据库功能表设计。</p>
+<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><p>大家的权限数据库好像都差不多，我比较习惯Code First，所以就直接贴数据库对应的对象。记录下功能名称，所属模块，窗体名称，控件名称。权限表里面主要就是记录了用户(角色)ID和功能的对应了，有记录就表示该用户(角色)拥有该功能权限，没有记录就是没有权限。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 系统功能</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">[<span class="meta">SugarTable(<span class="meta-string">"X_FUNCTION"</span>, <span class="meta-string">"系统功能"</span>)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">FUNCTION</span></span><br><span class="line">&#123;</span><br><span class="line">    [<span class="meta">SugarColumn(IsPrimaryKey = true, ColumnDescription = <span class="meta-string">"主键"</span>, Length = 50)</span>]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> GUID &#123; <span class="keyword">get</span>; <span class="keyword">set</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 功能名称</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    [<span class="meta">SugarColumn(ColumnDataType = <span class="meta-string">"NVARCHAR2(30)"</span>, ColumnDescription = <span class="meta-string">"功能名称"</span>)</span>]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> NAME</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span>;</span><br><span class="line">        <span class="keyword">set</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 模块ID</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    [<span class="meta">SugarColumn(ColumnDescription = <span class="meta-string">"模块ID"</span>, Length = 50)</span>]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> MODULEID</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span>;</span><br><span class="line">        <span class="keyword">set</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 窗体名称</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    [<span class="meta">SugarColumn(ColumnDescription = <span class="meta-string">"窗体名称"</span>, Length = 50)</span>]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> FORMNAME</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span>;</span><br><span class="line">        <span class="keyword">set</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 控件名称</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    [<span class="meta">SugarColumn(ColumnDescription = <span class="meta-string">"控件名称"</span>, Length = 50)</span>]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">string</span> CONTROLNAME</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span>;</span><br><span class="line">        <span class="keyword">set</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="如何控制"><a href="#如何控制" class="headerlink" title="如何控制"></a>如何控制</h2><p>最简单的方法，就是自己在代码里面把每个功能入口的控件都手动判断一遍，他们的name在不在有权限的功能列表的控件名称里。当然简单很有可能就代表蛋疼，有的窗口可能要控制的上百控件，得写上百if-esle，这实在是太不优雅了，如果还有多个窗口的权限需要控制，那就真是灾难了。这个时候反射就可以起到比较好的作用。我们可以创建一个继承自Form的类，在这个类里面检查权限并设置控件是否可用。我使用了DevExpress控件，所以继承自XtraForm。然后只要窗口继承CheckPowerXtraForm，就可以进行权限控制了。</p>
+<p>代码中有两个地方需要注意，第一是要等待创建窗口句柄再设置窗口控件的可用性。因为要等待，以及读数据库，所以不能放在主线程里面(写到这里，忽然觉得这个检查权限应该放在FormLoad事件里比较好，不用Thread.Sleep，不过要读数据库，还是不适合放在主线程)。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 检查权限</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">CheckPowerXtraForm</span> : <span class="title">XtraForm</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">CheckPowerXtraForm</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="comment">//不要再主线程运行</span></span><br><span class="line">        Task.Run(() =&gt;</span><br><span class="line">        &#123;</span><br><span class="line">            CheckPower();</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 检查权限</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">async</span> <span class="keyword">void</span> <span class="title">CheckPower</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">var</span> powerDal = <span class="keyword">new</span> PowerDAL();</span><br><span class="line">        <span class="keyword">var</span> functions = <span class="keyword">await</span> powerDal.GetPowerFunctionsByUserAsync(Global.User.GUID);</span><br><span class="line">        <span class="comment">//获取值属于本窗体的权限控件名称</span></span><br><span class="line">        <span class="keyword">var</span> formControls = functions.Where(f =&gt; f.FORMNAME == <span class="keyword">this</span>.GetType().Name).Select(f =&gt; f.CONTROLNAME).ToList();</span><br><span class="line">        <span class="comment">//等待创建窗口句柄</span></span><br><span class="line">        <span class="keyword">while</span> (!<span class="keyword">this</span>.Visible)</span><br><span class="line">        &#123;</span><br><span class="line">            Thread.Sleep(<span class="number">100</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">this</span>.BeginInvoke(<span class="keyword">new</span> Action(()=&gt;&#123;</span><br><span class="line">            <span class="keyword">var</span> type = <span class="keyword">this</span>.GetType();</span><br><span class="line">            <span class="keyword">var</span> fields = <span class="keyword">this</span>.GetType().GetFields(BindingFlags.NonPublic|BindingFlags.Instance);</span><br><span class="line">            <span class="keyword">foreach</span> (<span class="keyword">var</span> field <span class="keyword">in</span> fields)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">var</span> <span class="keyword">value</span> = field.GetValue(<span class="keyword">this</span>);</span><br><span class="line">                <span class="keyword">if</span> (<span class="keyword">value</span> <span class="keyword">is</span> Control)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">var</span> control = <span class="keyword">value</span> <span class="keyword">as</span> Control;</span><br><span class="line">                    <span class="keyword">if</span> (!formControls.Contains(control.Name))</span><br><span class="line">                    &#123;</span><br><span class="line">                        control.Enabled = <span class="literal">false</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">value</span> <span class="keyword">is</span> BarItem)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">var</span> item = <span class="keyword">value</span> <span class="keyword">as</span> BarItem;</span><br><span class="line">                    <span class="keyword">if</span> (!formControls.Contains(item.Name))</span><br><span class="line">                    &#123;</span><br><span class="line">                        item.Enabled = <span class="literal">false</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">value</span> <span class="keyword">is</span> ToolStripMenuItem)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">var</span> item = <span class="keyword">value</span> <span class="keyword">as</span> ToolStripMenuItem;</span><br><span class="line">                    <span class="keyword">if</span> (!formControls.Contains(item.Name))</span><br><span class="line">                    &#123;</span><br><span class="line">                        item.Enabled = <span class="literal">false</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>上面的做法有一个问题，窗口里面不是所有控件都需要权限控制的，有的是一些容器性的控件比如Groupbox，有的是一些是个用户就有的功能比如退出登录。按上面代码的做法，只要没有记录的，全部都会设置成不可用。所以我们需要对需要权限控制的做一个标记。有两个办法：</p>
+<ol>
+<li>把所有需要控制权限的控件Enabled都事先设置成false，然后有权限的就设置成true。</li>
+<li>给需要控制的控件设置一个特性。</li>
+</ol>
+<p>下面说说第二种做法。首先定义一个特性，里面什么都不需要写。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 检查权限的特性</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">[<span class="meta">AttributeUsage(AttributeTargets.Field)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">CheckPowerAttribute</span> : <span class="title">Attribute</span></span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后给需要控制的控件赋予这个特性。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line">[<span class="meta">CheckPowerAttribute</span>]</span><br><span class="line"><span class="keyword">private</span> DevExpress.XtraBars.BarButtonItem mbbi_exportexcel;</span><br><span class="line">[<span class="meta">CheckPowerAttribute</span>]</span><br><span class="line"><span class="keyword">private</span> DevExpress.XtraBars.BarButtonItem mbbi_exportcad;</span><br><span class="line">[<span class="meta">CheckPowerAttribute</span>]</span><br><span class="line"><span class="keyword">private</span> DevExpress.XtraBars.BarButtonItem mbbi_exportshp;</span><br></pre></td></tr></table></figure>
+
+<p>然后在权限控制代码里只处理具有这个特性的控件。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//~~~</span></span><br><span class="line"><span class="keyword">foreach</span> (<span class="keyword">var</span> field <span class="keyword">in</span> fields)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">var</span> cattributes = field.GetCustomAttributes(<span class="keyword">typeof</span>(CheckPowerAttribute), <span class="literal">false</span>);</span><br><span class="line">    <span class="keyword">if</span> (cattributes.Length != <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">var</span> <span class="keyword">value</span> = field.GetValue(<span class="keyword">this</span>);</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">value</span> <span class="keyword">is</span> Control)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">var</span> control = <span class="keyword">value</span> <span class="keyword">as</span> Control;</span><br><span class="line">            <span class="keyword">if</span> (!formControls.Contains(control.Name))</span><br><span class="line">            &#123;</span><br><span class="line">                control.Enabled = <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">value</span> <span class="keyword">is</span> BarItem)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">var</span> item = <span class="keyword">value</span> <span class="keyword">as</span> BarItem;</span><br><span class="line">            <span class="keyword">if</span> (!formControls.Contains(item.Name))</span><br><span class="line">            &#123;</span><br><span class="line">                item.Enabled = <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">value</span> <span class="keyword">is</span> ToolStripMenuItem)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">var</span> item = <span class="keyword">value</span> <span class="keyword">as</span> ToolStripMenuItem;</span><br><span class="line">            <span class="keyword">if</span> (!formControls.Contains(item.Name))</span><br><span class="line">            &#123;</span><br><span class="line">                item.Enabled = <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//~~~</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>说是优雅，其实自己一边写一边都觉得有不少改进的地方，比如CheckPower()执行的位置，还有设置Enable的时候用反射设置也会简洁很多，如果有更好的改进方案欢迎评论讨论。</p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#数据库"><span class="toc-number">1.</span> <span class="toc-text">数据库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何控制"><span class="toc-number">2.</span> <span class="toc-text">如何控制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题"><span class="toc-number">3.</span> <span class="toc-text">问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2022/2022/如何优雅的对WinForm窗体应用程序进行权限控制/";
+  var disqus_url = "http://zxhm.me/2022/2022/如何优雅的对WinForm窗体应用程序进行权限控制/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2022 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
