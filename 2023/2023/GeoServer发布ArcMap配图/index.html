@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>GeoServer发布ArcMap配图 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>GeoServer发布ArcMap配图</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2023年03月20日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#GeoServer" class='tag'>GeoServer</a>
+
+  <a href="/tags/#Leaflet" class='tag'>Leaflet</a>
+
+  <a href="/tags/#ArcGIS" class='tag'>ArcGIS</a>
+
+
+            
+          </div>
+          <p>项目过程中遇到一个需求：leaflet要使用自定义的底图。现在配图一般都会用ArcMap，但是不能使用ArcGIS Server发布（没买）。所以需要研究一下怎样把ArcMap配的地图用GeoServer发布出去。</p>
+<p>首先需要明确一点，动态地图服务（WMS）想都不要想，他是实时渲染的，需要数据+样式，只能发布瓦片服务。</p>
+<h2 id="一、数据准备"><a href="#一、数据准备" class="headerlink" title="一、数据准备"></a>一、数据准备</h2><p>数据准备分两步：<br>第一步，确定数据和mxd文件都是WGS 1984 Web Mercator Auxiliary Sphere（WKID:3857）坐标系。我这里是需要使用Leaflet加载，3857是最方便的。其他情况也需要尽量保证数据和配图都是投影坐标系，否则GeoServer的GeoWebCache插件不好处理。<br>第二步：切片获得arcgis瓦片。这里有两种方式，一种是发布到ArcGIS Server等待其切片完成，一种是分享为切片包。使用第二种方式需要在ArcMap里打开相关的选项：Customize&gt;Sharing&gt;Enable ArcGIS Runtime Tools，这里需要注意，很多同志ArcGIS10.4以后的版本是通过直接覆盖AfCore.dll破解而不是通过License破解的，这种破解方式这个ArcGIS Runtime Tools是用不了的。<br><img src="http://qiniu.myshuju.net/blog/images/2023/1679294851556.png" alt><br>无论采取什么切片方式，如果最终使用leaflet加载，推荐使用用自带的Arcgis Online….切片方案，可适当调整级别，不然会很大很大。如果有其他的需求，可以自己使用ArcGIS工具箱里的切片方案制作工具来做一个。<br><img src="http://qiniu.myshuju.net/blog/images/2023/1679294718462.png" alt><br>最后如果使用ArcGIS Server切片，就将切片文件从缓存文件夹里拷出来，如果分享成切片包，就将切片包改成.zip文件，将切片文件从里面解压出来。拷出来需要有以下这些东西。<br><img src="http://qiniu.myshuju.net/blog/images/2023/1679295658839.png" alt></p>
+<h2 id="二、配置GeoServer"><a href="#二、配置GeoServer" class="headerlink" title="二、配置GeoServer"></a>二、配置GeoServer</h2><ol>
+<li><p>给GeoServer设置缓存路径，在GeoServer文件夹下打开webapps/geoserver/WEB-INF/web.xml，在里面加入如下代码，其中param-value下填入缓存要存放的路径，保存。然后将ArcGIS切片文件拷进这个文件夹。</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">context-param</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">param-name</span>&gt;</span>GEOWEBCACHE_CACHE_DIR<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">param-value</span>&gt;</span>/home/zxhm/geoserver/cache_dir<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">context-param</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>随后启动GeoServer，GeoServer会在缓存路径下生成geowebcache.xml文件，在里面的layers节点下面加入如下代码。其中tilingScheme节点下填入要发布的切片的conf.xml路径，里面主要是瓦片配置。tileCachePath节点下加入_alllayers的路径。</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">arcgisLayer</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">name</span>&gt;</span>hbw_tiled<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">tilingScheme</span>&gt;</span>/home/zxhm/geoserver/cache_dir/hbw_tiled/conf.xml<span class="tag">&lt;/<span class="name">tilingScheme</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">tileCachePath</span>&gt;</span>/home/zxhm/geoserver/cache_dir/hbw_tiled/_alllayers<span class="tag">&lt;/<span class="name">tileCachePath</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">hexZoom</span>&gt;</span>false<span class="tag">&lt;/<span class="name">hexZoom</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">arcgisLayer</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h2 id="三、配置GeoWebCache"><a href="#三、配置GeoWebCache" class="headerlink" title="三、配置GeoWebCache"></a>三、配置GeoWebCache</h2><p>GeoServer是不支持arcgisLayer的，因此需要借助GeoWebCache插件。虽然比较新的版本是自带GeoWebCache插件的，但是他又把里面识别arcgisLayer的功能给摘了出去，所以需要配置一下。</p>
+<ol>
+<li>在这里下载一个完整版的<a href="https://sourceforge.net/projects/geowebcache/files/geowebcache" target="_blank" rel="noopener">GeoWebCache</a>，把里面的geowebcache.war用压缩软件打开，从/WEB-INF下解压出<code>geowebcache-arcgiscache-context.xml</code>，从/WEB-INF/lib种解压出<code>gwc-arcgiscache-x.x.x.jar</code></li>
+<li>打开GeoServer文件夹webapps/geoserver/WEB-INF/lib，将<code>gwc-arcgiscache-x.x.x.jar</code>拷到里面。找到<code>gs-gwc-x.x.x.jar</code>，用压缩软件打开，将<code>geowebcache-arcgiscache-context.xml</code>加入其中。</li>
+<li>在<code>gs-gwc-x.x.x.jar</code>中找到<code>geowebcache-servlet.xml</code>，在里面加入<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">import</span> <span class="attr">resource</span>=<span class="string">"geowebcache-arcgiscache-context.xml"</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<p>找到<code>geowebcache-core-context.xml</code>，在里面加入</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"gwcArcGISGridsetConfiguration"</span> <span class="attr">class</span>=<span class="string">"org.geowebcache.arcgis.layer.ArcGISCacheGridsetConfiguration"</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>启动GeoServer，检查切片图层里是否有在第二步发布的图层。选择坐标系和格式可以看看能否预览。<br><img src="http://qiniu.myshuju.net/blog/images/2023/20230320153604.png" alt></li>
+</ol>
+<h2 id="四、Leaflet加载"><a href="#四、Leaflet加载" class="headerlink" title="四、Leaflet加载"></a>四、Leaflet加载</h2><p>Leaflet加载就是普普通通加载WMTS了，代码如下：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> params = <span class="string">'layer=hbw_tiled&amp;style=&amp;tilematrixset=EPSG:3857_hbw_tiled&amp;Service=WMTS&amp;Request=GetTile&amp;Version=1.0.0&amp;Format=image/png'</span></span><br><span class="line">L.tileLayer(<span class="string">`<span class="subst">$&#123;geoServerBase&#125;</span>gwc/service/wmts?<span class="subst">$&#123;params&#125;</span>&amp;TileMatrix=EPSG:3857_hbw_tiled:&#123;z&#125;&amp;TileCol=&#123;x&#125;&amp;TileRow=&#123;y&#125;`</span>,&#123;</span><br><span class="line">	maxZoom: <span class="number">18</span>,</span><br><span class="line">	minZoom: <span class="number">12</span>,</span><br><span class="line">&#125;).addTo(map)</span><br></pre></td></tr></table></figure>
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一、数据准备"><span class="toc-number">1.</span> <span class="toc-text">一、数据准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二、配置GeoServer"><span class="toc-number">2.</span> <span class="toc-text">二、配置GeoServer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三、配置GeoWebCache"><span class="toc-number">3.</span> <span class="toc-text">三、配置GeoWebCache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四、Leaflet加载"><span class="toc-number">4.</span> <span class="toc-text">四、Leaflet加载</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2023/2023/GeoServer发布ArcMap配图/";
+  var disqus_url = "http://zxhm.me/2023/2023/GeoServer发布ArcMap配图/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2023 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
