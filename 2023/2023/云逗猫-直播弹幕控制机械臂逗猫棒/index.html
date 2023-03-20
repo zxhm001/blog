@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="sogou_site_verification" content="rZCOURJedr">
+  <meta name="baidu-site-verification" content="MHKqWQPYmp">
+  <meta name="google-site-verification" content="7_5x-cd73n3XFQt0nK2XOiOASPW_RyZRDBEXcUiB0nY">
+  <meta name="msvalidate.01" content="85212EBB223945AE5D88E54E3D5B5E64">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content>
+  <meta name="keywords" content="ArcGIS,Leaflet,GeoServer,PostGIS,Python">
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <title>云逗猫-直播弹幕控制机械臂逗猫棒 | Hello Map</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lib/jquery.fancybox.min.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>Hello Map</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>云逗猫-直播弹幕控制机械臂逗猫棒</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2023年03月20日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#.Net Core" class='tag'>.Net Core</a>
+
+  <a href="/tags/#猫" class='tag'>猫</a>
+
+
+            
+          </div>
+          <p>这个东西思路是很简单的。简单来说在直播画面用文字跟观看者约定一些弹幕指令，然后用爬虫爬取直播弹幕，当爬到弹幕是约定的指令时，通过串口给舵机控制板发送信号，控制板控制舵机转动，机械臂就会做相应的动作。</p>
+<h2 id="猫"><a href="#猫" class="headerlink" title="猫"></a>猫</h2><p>两只纯白英短，一只公的一只母，公的叫熊熊，已经绝育了，母的叫红红，异瞳。</p>
+<p><img src="http://qiniu.myshuju.net/blog/images/2023/ea082a19fab39d4f30212cf967fafa7.jpg" alt></p>
+<h2 id="直播"><a href="#直播" class="headerlink" title="直播"></a>直播</h2><p>我这里选择了B站直播，也没有什么特别的原因，因为我现在主要只瞄一下B站直播，其他的平台不咋看。</p>
+<h2 id="爬取弹幕"><a href="#爬取弹幕" class="headerlink" title="爬取弹幕"></a>爬取弹幕</h2><p>我熟悉.NET技术栈，很幸运，找到了<a href="https://blog.csdn.net/qq_50682713/article/details/125116647" target="_blank" rel="noopener">极简式 Unity 获取 bilibili 直播弹幕、SC、上舰、礼物等 插件</a>这篇文章，虽然博主用于Unity，但既然都是C#，里面有99%是我能用的，所以我基本上复制了他的所有代码。然后连接直播间，侦测弹幕等信息都变得非常简单。</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">string</span>.IsNullOrWhiteSpace(<span class="keyword">this</span>.tb_roomId.Text))</span><br><span class="line">&#123;</span><br><span class="line">	OutputText(<span class="string">"请输入房间号"</span>, <span class="string">"error"</span>);</span><br><span class="line">	<span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">int</span> roomId = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">try</span></span><br><span class="line">&#123;</span><br><span class="line">	roomId = Convert.ToInt32(<span class="keyword">this</span>.tb_roomId.Text);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span> (Exception)</span><br><span class="line">&#123;</span><br><span class="line">	OutputText(<span class="string">"房间号需要是数字"</span>, <span class="string">"error"</span>);</span><br><span class="line">	<span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line">_biliBiliLiveRequest = <span class="keyword">new</span> BiliBiliLiveRequest();</span><br><span class="line"><span class="keyword">bool</span> connected = <span class="keyword">await</span> _biliBiliLiveRequest.Connect(roomId);</span><br><span class="line"><span class="keyword">if</span> (connected)</span><br><span class="line">&#123;</span><br><span class="line">	OutputText(<span class="string">"连接直播间成功"</span>);</span><br><span class="line">	_biliBiliLiveRequest.OnDanmuCallBack += biliBiliLiveRequest_OnDanmuCallBack;</span><br><span class="line">	_biliBiliLiveRequest.OnGiftCallBack += biliBiliLiveRequest_OnGiftCallBack;</span><br><span class="line">	_biliBiliLiveRequest.OnGuardCallBack += biliBiliLiveRequest_OnGuardCallBack;</span><br><span class="line">	_biliBiliLiveRequest.OnMessage += biliBiliLiveRequest_OnMessage;</span><br><span class="line">	<span class="keyword">this</span>.btn_liveConnect.Content = <span class="string">"断开"</span>;</span><br><span class="line">	_IsLiveConnected = <span class="literal">true</span>;</span><br><span class="line">	Task.Run(<span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">		<span class="keyword">await</span> SetCaptionTaskAsync();</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">	OutputText(<span class="string">"连接直播间失败，请检查房间号是否正确"</span>, <span class="string">"error"</span>);</span><br><span class="line">	_biliBiliLiveRequest = <span class="literal">null</span>;</span><br><span class="line">	_IsLiveConnected = <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="通过串口发送信号到控制板"><a href="#通过串口发送信号到控制板" class="headerlink" title="通过串口发送信号到控制板"></a>通过串口发送信号到控制板</h2><p>我在淘宝上买的一块舵机控制板，这块板子有个好处，可以通过USB接口直接连接电脑通过他们的上位机软件进行调试，还可以通过上位机软件在板子里录制一些动作组。当然这块板子也有一个很大的缺点，他的USB口只能他的上位机软件去用，开发者不能通过他的USB口传输数据。因此还需要买一根USB转TTL线，买之后线的GND接板子的GND，线的VCC供电口接板子的3.3，线的RXD接板子的TX，线的TXD接板子的RX。<br><img src="http://qiniu.myshuju.net/blog/images/2023/20221008171900.png" alt><br>USB转TTL线插上电脑之后如果没有串口，就表示电脑需要安装FT232R USBUART驱动，<a href="https://ftdichip.com/drivers/d2xx-drivers/" target="_blank" rel="noopener">下载地址</a>选择windows下面的setup executable安装比较方便。<br><img src="http://qiniu.myshuju.net/blog/images/2023/20230117180016.png" alt><br>我也没有用过其他的舵机，我猜不同的舵机驱动板应该是有不同的通信协议的，比如我这个板子的说明书上说运行动作组的指令是这样的<br><img src="http://qiniu.myshuju.net/blog/images/2023/1674004875895.png" alt><br>代码对应的就是</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">byte</span>[] buffer = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">7</span>];</span><br><span class="line">buffer[<span class="number">0</span>] = FRAME_HEADER;</span><br><span class="line">buffer[<span class="number">1</span>] = FRAME_HEADER;</span><br><span class="line">buffer[<span class="number">2</span>] = <span class="number">0x05</span>;</span><br><span class="line">buffer[<span class="number">3</span>] = CMD_ACTION_GROUP_RUN;</span><br><span class="line">buffer[<span class="number">4</span>] = Convert.ToByte(index);</span><br><span class="line">buffer[<span class="number">5</span>] = <span class="number">0x01</span>;</span><br><span class="line">buffer[<span class="number">6</span>] = <span class="number">0x00</span>;</span><br><span class="line"><span class="keyword">try</span></span><br><span class="line">&#123;</span><br><span class="line">	_serialPort.Write(buffer, <span class="number">0</span>, buffer.Length);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span> (Exception ex)</span><br><span class="line">&#123;</span><br><span class="line">	OutputText(<span class="string">$"发送命令失败<span class="subst">&#123;ex.Message&#125;</span>"</span>, <span class="string">"error"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>动作组运行完之后板子返回指令</p>
+<p><img src="%E9%99%84%E4%BB%B6/1674005137328.png" alt><br>因此我也需要做相应的处理</p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">async</span> <span class="keyword">void</span> <span class="title">serialPort_DataReceived</span>(<span class="params"><span class="keyword">object</span> sender, SerialDataReceivedEventArgs e</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">byte</span>[] buffer = <span class="keyword">new</span> <span class="keyword">byte</span>[_serialPort.BytesToRead];</span><br><span class="line">	_serialPort.Read(buffer, <span class="number">0</span>, _serialPort.BytesToRead);</span><br><span class="line">	<span class="keyword">string</span> result = <span class="string">""</span>;</span><br><span class="line">	<span class="keyword">foreach</span> (<span class="keyword">var</span> b <span class="keyword">in</span> buffer)</span><br><span class="line">	&#123;</span><br><span class="line">		result += b.ToString(<span class="string">"X2"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	OutputText(<span class="string">$"串口返回数据：<span class="subst">&#123;result&#125;</span>"</span>);</span><br><span class="line">	<span class="keyword">if</span> (buffer.Length &gt; <span class="number">3</span> &amp;&amp; buffer[<span class="number">3</span>] == <span class="number">0x08</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">await</span> WorkStopAsync();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="推流软件"><a href="#推流软件" class="headerlink" title="推流软件"></a>推流软件</h2><p>推流软件我使用的OBS，其实我也没用过其他推流软件，这次使用的时候发现OBS有个很好的优点，他显示从文件读取的文本时会实时读取文件，文件更新后直播流的文字会实时更新，这样就能实时展示一些东西，比如当前是谁在操作机械臂。</p>
+<h2 id="最终程序"><a href="#最终程序" class="headerlink" title="最终程序"></a>最终程序</h2><p>最终程序如下图，界面用了AvaloniaUI，之所以用AvaloniaUI是因为我最初是想在树莓派Linux上运行的，得跨平台，树莓派的GPIO口自带串口，直接跟驱动板交互，美滋滋。但是直播还是不好弄，用ffmpeg推流还是没有OBS方便，最终还是选择了用Windows电脑。<br><img src="http://qiniu.myshuju.net/blog/images/2023/1674015891768.png" alt></p>
+<h2 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h2><p>如果不是想着在树莓派上搞，其实坑不多。最主要就是安装机械臂的时候得先调一下舵机，确保每个舵机在1500处安装。</p>
+<h2 id="成果"><a href="#成果" class="headerlink" title="成果"></a>成果</h2><p><a href="https://live.bilibili.com/6889034" target="_blank" rel="noopener">成果示例</a>,至于猫配不配合，营不营业，就不是人力能及的了。</p>
+
+        </section>
+    </article>
+    
+        <!-- disqus 评论框 start -->
+        <div class="comment">
+            <div id="disqus_thread" class="disqus-thread">
+              <i>加载评论框需要翻墙</i>
+            </div>
+        </div>
+        <!-- disqus 评论框 end -->
+    
+    
+        <!-- livere 评论框 start -->
+        <div class="comment">
+            <div id="lv-container" data-id="city" data-uid="your_livere_uid"></div>
+        </div>
+        <!-- livere 评论框 end -->
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#猫"><span class="toc-number">1.</span> <span class="toc-text">猫</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#直播"><span class="toc-number">2.</span> <span class="toc-text">直播</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#爬取弹幕"><span class="toc-number">3.</span> <span class="toc-text">爬取弹幕</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#通过串口发送信号到控制板"><span class="toc-number">4.</span> <span class="toc-text">通过串口发送信号到控制板</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推流软件"><span class="toc-number">5.</span> <span class="toc-text">推流软件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#最终程序"><span class="toc-number">6.</span> <span class="toc-text">最终程序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#注意"><span class="toc-number">7.</span> <span class="toc-text">注意</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#成果"><span class="toc-number">8.</span> <span class="toc-text">成果</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+<!-- disqus 公共JS代码 -->
+<script type="text/javascript">
+  /* * * CONFIGURATION VARIABLES * * */
+  var disqus_shortname = "zxhm";
+  var disqus_identifier = "http://zxhm.me/2023/2023/云逗猫-直播弹幕控制机械臂逗猫棒/";
+  var disqus_url = "http://zxhm.me/2023/2023/云逗猫-直播弹幕控制机械臂逗猫棒/";
+
+  isAgent(getDisqus)
+
+  // determine user agent in China
+  function isAgent(cb) {
+    var url = '//graph.facebook.com/feed?callback=h';
+    var xhr = new XMLHttpRequest();
+    var called = false;
+    xhr.open('GET', url);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      called = true;
+      cb(true);
+      }
+    };
+    xhr.send();
+    // timeout 1s, this facebook API is very fast.
+    setTimeout(function() {
+      if (!called) {
+      xhr.abort();
+      cb(false)
+      }
+    }, 1000);
+  }
+
+  function getDisqus(isAgent) {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; 
+    dsq.async = true
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq)
+  }
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+<script type="text/javascript">
+  (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+
+      if (typeof LivereTower === 'function') { return; }
+
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+
+      e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2023 | Powered by <a href="https://www.myshuju.net" target="_blank">Andy Zhang</a>&nbsp
+    </div>
+    <!-- <div>
+      Write by <a href="http://www.zxhm.me" target="_blank">Zxhm</a>
+    </div> -->
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="/lib/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
